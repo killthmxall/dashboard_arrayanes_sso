@@ -378,6 +378,9 @@ def construir_estado_dashboard(registros, agg, agg_hora_latest, fechas, personas
     hoy_iso = datetime.now().date().isoformat()
     ingresos_hoy = sum((r.get("conteo", 0) or 0) for r in registros if r.get("fecha") == hoy_iso)
 
+    # NUEVO: personas únicas hoy
+    personas_unicas_hoy = len({r.get("person_id") for r in registros if r.get("fecha") == hoy_iso})
+
     # Cobertura galería
     gallery_names = set()
     try:
@@ -457,6 +460,7 @@ def construir_estado_dashboard(registros, agg, agg_hora_latest, fechas, personas
             "total_gallery_persons": total_gallery_persons,
             "ingresos_hoy": ingresos_hoy,
             "total_personas": total_personas,
+            "personas_unicas_hoy": personas_unicas_hoy,
             "total_registros": total_registros,
             "hoy_iso": hoy_iso
         },
@@ -488,8 +492,6 @@ def construir_estado_dashboard(registros, agg, agg_hora_latest, fechas, personas
 
 
 def construir_html_dashboard_bootstrap(estado: dict):
-    """Página principal — estructura base (los datos se hidratan y luego se actualizan por SSE)."""
-    # Valores iniciales para render; si vienen vacíos, meter defaults
     k = estado.get("kpis", {})
     percent_gallery = k.get("percent_gallery", 0.0)
     recognized_in_gallery = k.get("recognized_in_gallery", 0)
@@ -498,6 +500,7 @@ def construir_html_dashboard_bootstrap(estado: dict):
     total_personas = k.get("total_personas", 0)
     total_registros = k.get("total_registros", 0)
     hoy_iso = k.get("hoy_iso", datetime.now().date().isoformat())
+    personas_unicas_hoy = k.get("personas_unicas_hoy", 0)
 
     top_items = estado.get("top_items_html", "")
     personasChart_labels = json.dumps(estado.get("personasChart", {}).get("labels", []))
@@ -627,9 +630,9 @@ def construir_html_dashboard_bootstrap(estado: dict):
       </div>
 
       <div class="card">
-        <h3>Personas únicas</h3>
-        <div class="val" id="kpi_personas">{total_personas}</div>
-        <div class="muted">Total de personas detectadas en el rango de registros</div>
+        <h3>Personas únicas hoy</h3>
+        <div class="val" id="kpi_personas_hoy">{personas_unicas_hoy}</div>
+        <div class="muted">Personas distintas detectadas el</div><div id="kpi_hoy">{hoy_iso}</div>
       </div>
 
       <div class="card" style="display:none">
@@ -889,9 +892,6 @@ def construir_html_dashboard_bootstrap(estado: dict):
     options: {{ responsive: true, scales: {{ x: {{ stacked: true }}, y: {{ stacked: true, beginAtZero: true, ticks: {{ precision:0 }} }} }} }}
   }});
 
-  // ==============================
-  // SSE: escuchar actualizaciones
-  // ==============================
   function applyEstado(estado) {{
     // KPIs
     const k = estado.kpis || {{}};
@@ -900,7 +900,7 @@ def construir_html_dashboard_bootstrap(estado: dict):
     document.getElementById('kpi_gallery_total').innerText = k.total_gallery_persons ?? 0;
     document.getElementById('kpi_ingresos').innerText = k.ingresos_hoy ?? 0;
     document.getElementById('kpi_hoy').innerText = k.hoy_iso ?? '';
-    document.getElementById('kpi_personas').innerText = k.total_personas ?? 0;
+    document.getElementById('kpi_personas_hoy').innerText = k.personas_unicas_hoy ?? 0;
     const kpiReg = document.getElementById('kpi_registros'); if (kpiReg) kpiReg.innerText = k.total_registros ?? 0;
 
     // Top lista
