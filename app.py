@@ -570,7 +570,7 @@ def construir_html_dashboard_bootstrap(estado: dict):
     0%   {{ background: #0b1020; }}
     20%  {{ background: #103b2b; }}
     50%  {{ background: #0b1020; }}
-    70%  {{ background: #103b2b; }}
+    70%  {{ background: #3b1010; }}
     100% {{ background: #0b1020; }}
   }}
   body.flash {{ animation: bg-flash 5s ease-in-out 1; }}
@@ -863,7 +863,7 @@ def construir_html_dashboard_bootstrap(estado: dict):
     setTimeout(() => {{
       alertEl.classList.remove('show');
       document.body.classList.remove('flash');
-    }}, 5000);
+    }}, 1200);
   }}
 
   // ==== Chart.js instancias (reutilizables) ====
