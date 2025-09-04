@@ -39,6 +39,21 @@ _ingest_lock = threading.Lock()
 _last_fetch_hash = None
 _stop_event = threading.Event()
 
+_worker_started = False
+_worker_lock = threading.Lock()
+
+def _ensure_background_started():
+    global _worker_started
+    if _worker_started:
+        return
+    with _worker_lock:
+        if _worker_started:
+            return
+        t = threading.Thread(target=background_worker, daemon=True)
+        t.start()
+        _worker_started = True
+
+
 
 # =========================
 # Utilidades
@@ -83,59 +98,138 @@ def obtener_nuevo_token():
 
 
 def cargar_cache_galeria():
-    """Llena gallery_cache y PERSON_IMG_MAP."""
     global TOKEN, gallery_cache, PERSON_IMG_MAP
+
+    BASE_URL = "https://dashboard-api.verifyfaces.com/companies/54/galleries/531"
+    PER_PAGE = 100
+
+    # Parámetros de robustez
+    MAX_PAGE_RETRIES = 3          # reintentos por solicitud de página
+    REQUEST_TIMEOUT  = 30         # segundos por request (↑ robusto)
+    BACKOFF_BASE     = 1.6        # factor de crecimiento exponencial
+    BACKOFF_JITTER   = (0.15, 0.65)  # jitter aleatorio en segundos
+
+    # 1) Asegurar token
     if not TOKEN and not obtener_nuevo_token():
-        print("Error: No se pudo obtener un token para la galería")
+        print("cargar_cache_galeria: no se pudo obtener token inicial")
         return False
 
-    base_url = "https://dashboard-api.verifyfaces.com/companies/54/galleries/531"
     headers = {"Authorization": f"Bearer {TOKEN}"}
-    per_page = 100
+
+    # 2) Estructuras temporales (swap al final si todo OK)
+    temp_gallery_cache = {}
+    temp_person_img_map = {}
+
+    def _extract_with_fallback(image_data):
+        """Reutiliza tu extractor principal y retorna (filename, metadata, img_url)."""
+        original_filename = image_data.get("originalFilename")
+        metadata = image_data.get("metadata")
+        img_url = _extract_image_url(image_data)
+        return original_filename, metadata, img_url
+
+    def _sleep_backoff(attempt_idx: int):
+        # backoff = base^(attempt_idx) + jitter
+        base = (BACKOFF_BASE ** attempt_idx)
+        jitter = random.uniform(*BACKOFF_JITTER)
+        time.sleep(base + jitter)
+
     page = 1
-    gallery_cache.clear()
-    PERSON_IMG_MAP.clear()
     total_cargados = 0
 
-    try:
-        while True:
-            params = {"perPage": per_page, "page": page}
-            resp = requests.get(base_url, headers=headers, params=params, timeout=10)
-            if resp.status_code == 401:
-                if not obtener_nuevo_token():
-                    print("401: no se pudo renovar el token.")
-                    return False
-                headers["Authorization"] = f"Bearer {TOKEN}"
-                resp = requests.get(base_url, headers=headers, params=params, timeout=10)
-            resp.raise_for_status()
-            data = resp.json()
-            images = data.get("images", [])
-            if not images:
+    while True:
+        # 3) Intentar traer una página con reintentos
+        last_exc = None
+        for attempt in range(MAX_PAGE_RETRIES):
+            try:
+                params = {"perPage": PER_PAGE, "page": page}
+                resp = requests.get(BASE_URL, headers=headers, params=params, timeout=REQUEST_TIMEOUT)
+
+                # 3.1) Renovar token si caducó (una vez por intento)
+                if resp.status_code == 401:
+                    # renovar y repetir este intento sin contar como fallo definitivo
+                    if not obtener_nuevo_token():
+                        last_exc = RuntimeError("401 y no se pudo renovar token")
+                        break
+                    headers["Authorization"] = f"Bearer {TOKEN}"
+                    # Reintenta de inmediato con el nuevo token:
+                    resp = requests.get(BASE_URL, headers=headers, params=params, timeout=REQUEST_TIMEOUT)
+
+                resp.raise_for_status()
+                data = resp.json()
+                images = data.get("images", []) or []
+
+                # 4) Procesar la página
+                if not images:
+                    # No hay más páginas
+                    print(f"Galería: fin de páginas (page={page-1}, total={total_cargados})")
+                    # Swap atómico solo si hubo al menos 0 (todo ok)
+                    gallery_cache = temp_gallery_cache
+                    PERSON_IMG_MAP = temp_person_img_map
+                    print(f"Galería cargada: {total_cargados} imágenes en caché.")
+                    return True
+
+                for image_data in images:
+                    original_filename, metadata, img_url = _extract_with_fallback(image_data)
+                    if original_filename and isinstance(metadata, dict):
+                        temp_gallery_cache[original_filename] = {
+                            "metadata": metadata,
+                            "image_url": img_url
+                        }
+                        total_cargados += 1
+                        person_name = metadata.get("name")
+                        if person_name and img_url and person_name not in temp_person_img_map:
+                            temp_person_img_map[person_name] = img_url
+
+                # Página procesada OK → pasar a la siguiente
+                page += 1
+
+                # Si la página devolvió menos que el tamaño, asumimos última página
+                if len(images) < PER_PAGE:
+                    gallery_cache = temp_gallery_cache
+                    PERSON_IMG_MAP = temp_person_img_map
+                    print(f"Galería cargada: {total_cargados} imágenes en caché.")
+                    return True
+
+                # Salir del bucle de reintentos (éxito en esta página)
                 break
 
-            for image_data in images:
-                original_filename = image_data.get("originalFilename")
-                metadata = image_data.get("metadata")
-                img_url = _extract_image_url(image_data)
-                if original_filename and isinstance(metadata, dict):
-                    gallery_cache[original_filename] = {
-                        "metadata": metadata,
-                        "image_url": img_url
-                    }
-                    total_cargados += 1
-                    person_name = metadata.get("name")
-                    if person_name and img_url and person_name not in PERSON_IMG_MAP:
-                        PERSON_IMG_MAP[person_name] = img_url
+            except requests.exceptions.Timeout as e:
+                last_exc = e
+                if attempt < MAX_PAGE_RETRIES - 1:
+                    _sleep_backoff(attempt)
+                    continue
+                print(f"cargar_cache_galeria: timeout persistente en page={page}: {e}")
 
-            if len(images) < per_page:
+            except requests.exceptions.RequestException as e:
+                # Conexión / HTTP 5xx, etc.
+                last_exc = e
+                # Si fue 5xx, reintenta; si 4xx (distinto de 401 ya manejado), no insiste
+                status = getattr(e.response, "status_code", None) if hasattr(e, "response") else None
+                if status and 400 <= status < 500 and status != 401:
+                    print(f"cargar_cache_galeria: error HTTP {status} en page={page}, no reintenta: {e}")
+                    break
+                if attempt < MAX_PAGE_RETRIES - 1:
+                    _sleep_backoff(attempt)
+                    continue
+                print(f"cargar_cache_galeria: error de red/API en page={page}: {e}")
+
+            except ValueError as e:
+                # JSON inválido u otra conversión; no suele recuperarse
+                last_exc = e
+                print(f"cargar_cache_galeria: respuesta JSON inválida en page={page}: {e}")
                 break
-            page += 1
 
-        print(f"Galería cargada: {total_cargados} imágenes en caché.")
-        return True
-    except requests.exceptions.RequestException as e:
-        print(f"Error al cargar la caché de la galería: {e}")
-        return False
+            except Exception as e:
+                # Cualquier otro error inesperado
+                last_exc = e
+                print(f"cargar_cache_galeria: error inesperado en page={page}: {e}")
+                break
+
+        # Si salimos del bucle de reintentos por error → abortar carga completa
+        if last_exc is not None:
+            print(f"cargar_cache_galeria: abortando carga por error en page={page}: {last_exc}")
+            return False
+
 
 
 def leer_csv(ruta: Path):
@@ -980,7 +1074,7 @@ def background_worker():
 # =========================
 @app.route("/")
 def index():
-    # Render inicial con estado actual del CSV
+    _ensure_background_started()
     registros, agg, agg_hora_latest, fechas, personas, personas_total = leer_csv(CSV_FILE)
     estado = construir_estado_dashboard(registros, agg, agg_hora_latest, fechas, personas, personas_total, PERSON_IMG_MAP)
     return render_template_string(construir_html_dashboard_bootstrap(estado))
@@ -1009,28 +1103,50 @@ def api_stats():
 
 @app.route("/stream")
 def stream():
-    """
-    Server-Sent Events: envía 'event: update' con el estado parcial
-    cuando el archivo CSV cambie (mtime).
-    """
+    _ensure_background_started()  # ver #3
+    headers = {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        "Connection": "keep-alive",
+        "X-Accel-Buffering": "no",
+    }
+
     def gen():
         last_mtime = None
-        while True:
-            # si el cliente se desconecta, Response cierra generador
-            try:
-                current_mtime = os.path.getmtime(CSV_FILE) if CSV_FILE.exists() else None
+        keepalive_every = 15  # segundos
+        last_ping = time.monotonic()
+        try:
+            while not _stop_event.is_set():
+                try:
+                    current_mtime = os.path.getmtime(CSV_FILE) if CSV_FILE.exists() else None
+                except Exception:
+                    current_mtime = None
+
                 if current_mtime and current_mtime != last_mtime:
                     last_mtime = current_mtime
                     registros, agg, agg_hora_latest, fechas, personas, personas_total = leer_csv(CSV_FILE)
                     estado = construir_estado_dashboard(registros, agg, agg_hora_latest, fechas, personas, personas_total, PERSON_IMG_MAP)
-                    payload = json.dumps(estado)
-                    yield f"event: update\ndata: {payload}\n\n"
-            except Exception:
-                # evita romper el stream ante errores transitorios
-                pass
-            time.sleep(STREAM_POLL_MTIME_SECONDS)
+                    yield f"event: update\ndata: {json.dumps(estado, ensure_ascii=False)}\n\n"
 
-    return Response(gen(), mimetype="text/event-stream")
+                # keep-alive para que el proxy no cierre el socket
+                now = time.monotonic()
+                if now - last_ping >= keepalive_every:
+                    yield ": keep-alive\n\n"
+                    last_ping = now
+
+                time.sleep(STREAM_POLL_MTIME_SECONDS)
+
+        except (GeneratorExit, SystemExit):
+            return
+        except Exception:
+            try:
+                yield "event: error\ndata: {\"msg\":\"sse-internal-error\"}\n\n"
+            except Exception:
+                pass
+            return
+
+    return Response(gen(), headers=headers)
+
 
 
 # =========================
