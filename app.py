@@ -1,8 +1,8 @@
-from flask import Flask, Response, render_template_string, request, jsonify, redirect, url_for
+from flask import Flask, Response, render_template_string, request, jsonify
 import requests
 from collections import defaultdict, Counter
 from datetime import datetime, timedelta, timezone
-from dateutil import parser
+from dateutil import parser  # si luego lo necesitas
 import csv
 from pathlib import Path
 import math
@@ -11,38 +11,55 @@ import random
 import threading
 import time
 import os
+from typing import Optional, Any, Dict
 
 app = Flask(__name__)
 
 # =========================
 # Configuración y estado
 # =========================
-detecciones = defaultdict(lambda: defaultdict(int))
-CSV_FILE = Path("detecciones_server.csv")
 
+# Credenciales y endpoints VerifyFaces
 API_URL = "https://dashboard-api.verifyfaces.com/companies/54/search/realtime"
 AUTH_URL = "https://dashboard-api.verifyfaces.com/auth/login"
 AUTH_EMAIL = "eangulo@blocksecurity.com.ec"
 AUTH_PASSWORD = "Scarling//07052022.?"
 TOKEN = None
 
+# IDs de galería
+EMP_GALLERY_ID = 531
+SOC_GALLERY_ID = 546
+GALLERY_IDS = [EMP_GALLERY_ID, SOC_GALLERY_ID]
+
+# CSVs por galería
+CSV_FILES = {
+    EMP_GALLERY_ID: Path("detecciones_empleados.csv"),
+    SOC_GALLERY_ID: Path("detecciones_socios.csv"),
+}
+
+# Caches por galería
+GALLERY_CACHE = {gid: {} for gid in GALLERY_IDS}         # originalFilename -> {metadata, image_url}
+PERSON_IMG_MAP_BY = {gid: {} for gid in GALLERY_IDS}     # person_name -> image_url
+
+# Hash por galería para evitar escrituras innecesarias
+_last_fetch_hash_by = {gid: None for gid in GALLERY_IDS}
+
+# Paginación / límites
 PER_PAGE = 100
 TOTAL_RECORDS_NEEDED = 1000
-
-gallery_cache = {}
-PERSON_IMG_MAP = {}
 
 # Control de ingesta y stream
 FETCH_PERIOD_SECONDS = 10            # cada cuánto baja nuevos eventos
 STREAM_POLL_MTIME_SECONDS = 2        # cada cuánto el SSE revisa cambios
 _ingest_lock = threading.Lock()
-_last_fetch_hash = None
 _stop_event = threading.Event()
 
 _worker_started = False
 _worker_lock = threading.Lock()
 
+
 def _ensure_background_started():
+    """Lanza el worker de ingesta una sola vez."""
     global _worker_started
     if _worker_started:
         return
@@ -54,11 +71,9 @@ def _ensure_background_started():
         _worker_started = True
 
 
-
 # =========================
 # Utilidades
 # =========================
-from typing import Optional, Any, Dict
 
 def _extract_image_url(image_data: Dict[str, Any]) -> Optional[str]:
     if not isinstance(image_data, dict):
@@ -97,79 +112,66 @@ def obtener_nuevo_token():
         return False
 
 
-def cargar_cache_galeria():
-    global TOKEN, gallery_cache, PERSON_IMG_MAP
+def cargar_cache_galeria(gallery_id: int) -> bool:
+    """
+    Carga en memoria el cache de la galería indicada (531 empleados, 546 socios).
+    Llena GALLERY_CACHE[gallery_id] y PERSON_IMG_MAP_BY[gallery_id].
+    """
+    global TOKEN, GALLERY_CACHE, PERSON_IMG_MAP_BY
 
-    BASE_URL = "https://dashboard-api.verifyfaces.com/companies/54/galleries/531"
-    PER_PAGE = 100
+    BASE_URL = f"https://dashboard-api.verifyfaces.com/companies/54/galleries/{gallery_id}"
+    PER_PAGE_LOCAL = 100
 
-    # Parámetros de robustez
-    MAX_PAGE_RETRIES = 3          # reintentos por solicitud de página
-    REQUEST_TIMEOUT  = 30         # segundos por request (↑ robusto)
-    BACKOFF_BASE     = 1.6        # factor de crecimiento exponencial
-    BACKOFF_JITTER   = (0.15, 0.65)  # jitter aleatorio en segundos
+    MAX_PAGE_RETRIES = 3
+    REQUEST_TIMEOUT  = 30
+    BACKOFF_BASE     = 1.6
+    BACKOFF_JITTER   = (0.15, 0.65)
 
-    # 1) Asegurar token
     if not TOKEN and not obtener_nuevo_token():
         print("cargar_cache_galeria: no se pudo obtener token inicial")
         return False
 
     headers = {"Authorization": f"Bearer {TOKEN}"}
 
-    # 2) Estructuras temporales (swap al final si todo OK)
-    temp_gallery_cache = {}
-    temp_person_img_map = {}
-
-    def _extract_with_fallback(image_data):
-        """Reutiliza tu extractor principal y retorna (filename, metadata, img_url)."""
-        original_filename = image_data.get("originalFilename")
-        metadata = image_data.get("metadata")
-        img_url = _extract_image_url(image_data)
-        return original_filename, metadata, img_url
-
     def _sleep_backoff(attempt_idx: int):
-        # backoff = base^(attempt_idx) + jitter
         base = (BACKOFF_BASE ** attempt_idx)
         jitter = random.uniform(*BACKOFF_JITTER)
         time.sleep(base + jitter)
+
+    temp_gallery_cache = {}
+    temp_person_img_map = {}
 
     page = 1
     total_cargados = 0
 
     while True:
-        # 3) Intentar traer una página con reintentos
         last_exc = None
         for attempt in range(MAX_PAGE_RETRIES):
             try:
-                params = {"perPage": PER_PAGE, "page": page}
+                params = {"perPage": PER_PAGE_LOCAL, "page": page}
                 resp = requests.get(BASE_URL, headers=headers, params=params, timeout=REQUEST_TIMEOUT)
 
-                # 3.1) Renovar token si caducó (una vez por intento)
                 if resp.status_code == 401:
-                    # renovar y repetir este intento sin contar como fallo definitivo
                     if not obtener_nuevo_token():
                         last_exc = RuntimeError("401 y no se pudo renovar token")
                         break
                     headers["Authorization"] = f"Bearer {TOKEN}"
-                    # Reintenta de inmediato con el nuevo token:
                     resp = requests.get(BASE_URL, headers=headers, params=params, timeout=REQUEST_TIMEOUT)
 
                 resp.raise_for_status()
                 data = resp.json()
                 images = data.get("images", []) or []
 
-                # 4) Procesar la página
                 if not images:
-                    # No hay más páginas
-                    print(f"Galería: fin de páginas (page={page-1}, total={total_cargados})")
-                    # Swap atómico solo si hubo al menos 0 (todo ok)
-                    gallery_cache = temp_gallery_cache
-                    PERSON_IMG_MAP = temp_person_img_map
-                    print(f"Galería cargada: {total_cargados} imágenes en caché.")
+                    GALLERY_CACHE[gallery_id] = temp_gallery_cache
+                    PERSON_IMG_MAP_BY[gallery_id] = temp_person_img_map
+                    print(f"Galería {gallery_id}: fin de páginas (page={page-1}, total={total_cargados})")
                     return True
 
                 for image_data in images:
-                    original_filename, metadata, img_url = _extract_with_fallback(image_data)
+                    original_filename = image_data.get("originalFilename")
+                    metadata = image_data.get("metadata")
+                    img_url = _extract_image_url(image_data)
                     if original_filename and isinstance(metadata, dict):
                         temp_gallery_cache[original_filename] = {
                             "metadata": metadata,
@@ -180,17 +182,13 @@ def cargar_cache_galeria():
                         if person_name and img_url and person_name not in temp_person_img_map:
                             temp_person_img_map[person_name] = img_url
 
-                # Página procesada OK → pasar a la siguiente
                 page += 1
-
-                # Si la página devolvió menos que el tamaño, asumimos última página
-                if len(images) < PER_PAGE:
-                    gallery_cache = temp_gallery_cache
-                    PERSON_IMG_MAP = temp_person_img_map
-                    print(f"Galería cargada: {total_cargados} imágenes en caché.")
+                if len(images) < PER_PAGE_LOCAL:
+                    GALLERY_CACHE[gallery_id] = temp_gallery_cache
+                    PERSON_IMG_MAP_BY[gallery_id] = temp_person_img_map
+                    print(f"Galería {gallery_id} cargada: {total_cargados} imágenes en caché.")
                     return True
 
-                # Salir del bucle de reintentos (éxito en esta página)
                 break
 
             except requests.exceptions.Timeout as e:
@@ -198,38 +196,32 @@ def cargar_cache_galeria():
                 if attempt < MAX_PAGE_RETRIES - 1:
                     _sleep_backoff(attempt)
                     continue
-                print(f"cargar_cache_galeria: timeout persistente en page={page}: {e}")
+                print(f"cargar_cache_galeria({gallery_id}): timeout persistente en page={page}: {e}")
 
             except requests.exceptions.RequestException as e:
-                # Conexión / HTTP 5xx, etc.
                 last_exc = e
-                # Si fue 5xx, reintenta; si 4xx (distinto de 401 ya manejado), no insiste
                 status = getattr(e.response, "status_code", None) if hasattr(e, "response") else None
                 if status and 400 <= status < 500 and status != 401:
-                    print(f"cargar_cache_galeria: error HTTP {status} en page={page}, no reintenta: {e}")
+                    print(f"cargar_cache_galeria({gallery_id}): HTTP {status} en page={page}, no reintenta: {e}")
                     break
                 if attempt < MAX_PAGE_RETRIES - 1:
                     _sleep_backoff(attempt)
                     continue
-                print(f"cargar_cache_galeria: error de red/API en page={page}: {e}")
+                print(f"cargar_cache_galeria({gallery_id}): error de red/API en page={page}: {e}")
 
             except ValueError as e:
-                # JSON inválido u otra conversión; no suele recuperarse
                 last_exc = e
-                print(f"cargar_cache_galeria: respuesta JSON inválida en page={page}: {e}")
+                print(f"cargar_cache_galeria({gallery_id}): JSON inválido en page={page}: {e}")
                 break
 
             except Exception as e:
-                # Cualquier otro error inesperado
                 last_exc = e
-                print(f"cargar_cache_galeria: error inesperado en page={page}: {e}")
+                print(f"cargar_cache_galeria({gallery_id}): error inesperado en page={page}: {e}")
                 break
 
-        # Si salimos del bucle de reintentos por error → abortar carga completa
         if last_exc is not None:
-            print(f"cargar_cache_galeria: abortando carga por error en page={page}: {last_exc}")
+            print(f"cargar_cache_galeria({gallery_id}): abortando carga por error en page={page}: {last_exc}")
             return False
-
 
 
 def leer_csv(ruta: Path):
@@ -305,6 +297,7 @@ def html_escape(s: str) -> str:
 # =========================
 # Construcción de UI
 # =========================
+
 def construir_filas_html(agg, agg_hora_latest, fechas, personas_total, person_img_map):
     filas = []
     def initials(name: str) -> str:
@@ -315,7 +308,6 @@ def construir_filas_html(agg, agg_hora_latest, fechas, personas_total, person_im
             return parts[0][:2].upper()
         return (parts[0][:1] + parts[-1][:1]).upper()
 
-    # Orden: fecha, hora última, conteo
     for (fecha, person_id), suma in sorted(
         agg.items(),
         key=lambda item: (item[0][0], agg_hora_latest.get((item[0][0], item[0][1]), "00:00:00"), item[1]),
@@ -377,17 +369,13 @@ def construir_estado_dashboard(registros, agg, agg_hora_latest, fechas, personas
     total_personas = len(set(r["person_id"] for r in registros)) if registros else 0
     hoy_iso = datetime.now().date().isoformat()
     ingresos_hoy = sum((r.get("conteo", 0) or 0) for r in registros if r.get("fecha") == hoy_iso)
-
-    # NUEVO: personas únicas hoy
     personas_unicas_hoy = len({r.get("person_id") for r in registros if r.get("fecha") == hoy_iso})
 
-    # Cobertura galería
+    # Cobertura galería (cruce por nombre exacto)
     gallery_names = set()
     try:
-        for meta in (gallery_cache or {}).values():
-            name = (meta or {}).get("metadata", {}).get("name")
-            if name:
-                gallery_names.add(name)
+        for meta in (person_img_map or {}).keys():
+            gallery_names.add(meta)
     except Exception:
         pass
     recognized_names = set(personas_ordenadas or [])
@@ -453,7 +441,6 @@ def construir_estado_dashboard(registros, agg, agg_hora_latest, fechas, personas
     last_ts_iso = last_ts.isoformat() if last_ts else ""
 
     estado = {
-        # KPIs
         "kpis": {
             "percent_gallery": round(percent_gallery, 1),
             "recognized_in_gallery": recognized_in_gallery,
@@ -464,34 +451,27 @@ def construir_estado_dashboard(registros, agg, agg_hora_latest, fechas, personas
             "total_registros": total_registros,
             "hoy_iso": hoy_iso
         },
-        # Top lista simple
         "top_items_html": top_items_html,
-        # Gráfico horizontal de top personas
         "personasChart": {
             "labels": labels_personas,
             "data": data_personas
         },
-        # Top10 por fecha (stacked)
         "top10Chart": {
             "labels": fechas,
             "datasets": datasets_top10
         },
-        # Esta semana (stacked)
         "thisWeekChart": {
             "labels": fechas_semana,
             "datasets": datasets_all
         },
-        # Tabla (tbody)
         "tbody_html": construir_filas_html(agg, agg_hora_latest, fechas, personas_total, person_img_map),
-        # Detalle expandible
         "times_by": construir_times_by(registros),
-        # Control de cambios
         "last_ts_iso": last_ts_iso
     }
     return estado
 
 
-def construir_html_dashboard_bootstrap(estado: dict):
+def construir_html_dashboard_bootstrap(estado: dict, gallery_id: int, titulo: str = "Dashboard"):
     k = estado.get("kpis", {})
     percent_gallery = k.get("percent_gallery", 0.0)
     recognized_in_gallery = k.get("recognized_in_gallery", 0)
@@ -516,12 +496,17 @@ def construir_html_dashboard_bootstrap(estado: dict):
     times_by_json = json.dumps(estado.get("times_by", {}))
     js_last_ts = json.dumps(estado.get("last_ts_iso", ""))
 
-    # === HTML original (con pequeños ajustes: sin recarga, con SSE) ===
+    # rutas y toggle
+    ruta_empleados = "/"
+    ruta_socios = "/socios"
+    activo_empleados = "active" if gallery_id == EMP_GALLERY_ID else ""
+    activo_socios = "active" if gallery_id == SOC_GALLERY_ID else ""
+
     return f"""<!doctype html>
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<title>Dashboard de Detecciones</title>
+<title>{html_escape(titulo)}</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
   :root {{
@@ -603,6 +588,15 @@ def construir_html_dashboard_bootstrap(estado: dict):
   .name-cell {{ display:flex; align-items:center; gap:10px; }}
   .avatar {{ width: 28px; height: 28px; border-radius: 50%; background: #0b1226; border: 1px solid var(--border); display:flex; align-items:center; justify-content:center; font-size: 12px; color: #9fb4da; font-weight:700; overflow:hidden; }}
   .avatar img {{ width:100%; height:100%; object-fit:cover; display:block; }}
+
+  .nav-toggle {{ display:flex; gap:8px; margin: 12px 0 20px; }}
+  .nav-toggle a {{
+    text-decoration:none; padding:8px 12px; border-radius:999px; border:1px solid var(--border);
+    color:var(--muted); background:#0b1226;
+  }}
+  .nav-toggle a.active {{
+    color:#08111e; background:#12b981; border-color:#0ea371; font-weight:800;
+  }}
 </style>
 </head>
 <body>
@@ -614,7 +608,13 @@ def construir_html_dashboard_bootstrap(estado: dict):
     <span style="padding: 5px">
       <img src="https://arrayanes.com/wp-content/uploads/2025/05/LOGO-ARRAYANES-1024x653.webp" alt="Arrayanes" style="height:80px; margin-bottom:16px;">
     </span>
-    <h1>Dashboard de detecciones Arrayanes Country Club</h1>
+
+    <div class="nav-toggle">
+      <a href="{ruta_empleados}" class="{activo_empleados}">Empleados</a>
+      <a href="{ruta_socios}" class="{activo_socios}">Socios</a>
+    </div>
+
+    <h1>{html_escape(titulo)} Arrayanes Country Club</h1>
 
     <div class="grid cards">
       <div class="card">
@@ -706,11 +706,9 @@ def construir_html_dashboard_bootstrap(estado: dict):
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-  // Estado cliente
   let CURRENT_LAST_TS = {js_last_ts};
   let TIMES_BY = {times_by_json};
 
-  // Filtros texto rápido
   (function(){{
     const input = document.getElementById('filterAgg');
     const tbody = document.getElementById('tbodyAgg');
@@ -724,7 +722,6 @@ def construir_html_dashboard_bootstrap(estado: dict):
     }});
   }})();
 
-  // Filtros avanzados (fecha / persona)
   (function(){{
     const tbody = document.getElementById('tbodyAgg');
     const dateStart = document.getElementById('dateStart');
@@ -805,7 +802,6 @@ def construir_html_dashboard_bootstrap(estado: dict):
     }}
   }}
 
-  // Expansión detalle por nombre
   (function attachExpandHandler(){{
     const tbody = document.getElementById('tbodyAgg');
     if (!tbody) return;
@@ -858,7 +854,6 @@ def construir_html_dashboard_bootstrap(estado: dict):
     }});
   }})();
 
-  // Animación toast
   function triggerVisualAlert() {{
     const alertEl = document.getElementById('newAlert');
     document.body.classList.add('flash');
@@ -869,7 +864,6 @@ def construir_html_dashboard_bootstrap(estado: dict):
     }}, 5000);
   }}
 
-  // ==== Chart.js instancias (reutilizables) ====
   const personasCtx = document.getElementById('personasChart').getContext('2d');
   const top10Ctx    = document.getElementById('top10Chart').getContext('2d');
   const weekCtx     = document.getElementById('thisWeekChart').getContext('2d');
@@ -893,7 +887,6 @@ def construir_html_dashboard_bootstrap(estado: dict):
   }});
 
   function applyEstado(estado) {{
-    // KPIs
     const k = estado.kpis || {{}};
     document.getElementById('kpi_gallery_pct').innerText = (k.percent_gallery ?? 0).toFixed(1) + '%';
     document.getElementById('kpi_gallery_rec').innerText = k.recognized_in_gallery ?? 0;
@@ -903,53 +896,42 @@ def construir_html_dashboard_bootstrap(estado: dict):
     document.getElementById('kpi_personas_hoy').innerText = k.personas_unicas_hoy ?? 0;
     const kpiReg = document.getElementById('kpi_registros'); if (kpiReg) kpiReg.innerText = k.total_registros ?? 0;
 
-    // Top lista
     document.getElementById('top_list').innerHTML = estado.top_items_html || '';
 
-    // Tablas
     const tbody = document.getElementById('tbodyAgg');
     const oldHTML = tbody.innerHTML;
     tbody.innerHTML = estado.tbody_html || '';
     if (tbody.innerHTML !== oldHTML) {{
-      // mantén filtros activos
       if (typeof applySpecificFilters === 'function') applySpecificFilters();
-      // resalta nuevas
       triggerVisualAlert();
     }}
 
-    // Times by
     TIMES_BY = estado.times_by || {{}};
 
-    // Charts
-    // Personas (horizontal)
     personasChart.data.labels = (estado.personasChart && estado.personasChart.labels) || [];
     personasChart.data.datasets[0].data = (estado.personasChart && estado.personasChart.data) || [];
     personasChart.update();
 
-    // Top10
     top10Chart.data.labels = (estado.top10Chart && estado.top10Chart.labels) || [];
     top10Chart.data.datasets = (estado.top10Chart && estado.top10Chart.datasets) || [];
     top10Chart.update();
 
-    // Semana
     thisWeekChart.data.labels = (estado.thisWeekChart && estado.thisWeekChart.labels) || [];
     thisWeekChart.data.datasets = (estado.thisWeekChart && estado.thisWeekChart.datasets) || [];
     thisWeekChart.update();
 
-    // last ts
     CURRENT_LAST_TS = estado.last_ts_iso || CURRENT_LAST_TS;
   }}
 
-  const es = new EventSource('/stream');
+  // IMPORTANTE: SSE por galería
+  const es = new EventSource('/stream?gallery={gallery_id}');
   es.addEventListener('update', (ev) => {{
     try {{
       const data = JSON.parse(ev.data);
       applyEstado(data);
     }} catch (e) {{}}
   }});
-  es.onerror = () => {{
-    // en caso de error de red, el navegador reintenta automáticamente
-  }};
+  es.onerror = () => {{}};
 </script>
 </body>
 </html>
@@ -957,32 +939,32 @@ def construir_html_dashboard_bootstrap(estado: dict):
 
 
 # =========================
-# Ingesta en segundo plano
+# Ingesta en segundo plano (por galería)
 # =========================
-def _fetch_and_write_csv(total_records_needed: int = TOTAL_RECORDS_NEEDED) -> bool:
+
+def _fetch_and_write_csv_for_gallery(gallery_id: int, total_records_needed: int = TOTAL_RECORDS_NEEDED) -> bool:
     """
-    Descarga eventos realtime y actualiza el CSV (idempotente cuando no hay cambios).
-    Devuelve True si hubo cambios reales escritos; False si no hubo cambios o falló.
+    Descarga eventos realtime (últimas 24h), filtra por gallery_id, y escribe el CSV de esa galería.
+    Devuelve True si hubo cambios escritos.
     """
-    global TOKEN, _last_fetch_hash
+    global TOKEN, _last_fetch_hash_by
+
+    csv_path = CSV_FILES[gallery_id]
 
     with _ingest_lock:
-        # Asegurar token + galería
+        # Asegurar token + cache de galería
         if not TOKEN and not obtener_nuevo_token():
-            print("Ingesta: no se pudo autenticar")
+            print(f"Ingesta[{gallery_id}]: no se pudo autenticar")
             return False
-        if not cargar_cache_galeria():
-            print("Ingesta: no se pudo cargar galería")
+        if not cargar_cache_galeria(gallery_id):
+            print(f"Ingesta[{gallery_id}]: no se pudo cargar galería")
             return False
 
         headers = {"Authorization": f"Bearer {TOKEN}"}
         try:
-            # ventana de 24h
             from_dt_utc = datetime.now(timezone.utc) - timedelta(days=1)
             to_dt_utc   = datetime.now(timezone.utc)
 
-            # NOTA: tu código tenía un bug en el 'from' (fecha fija de agosto).
-            # Corregido a ISO UTC válido:
             from_str = from_dt_utc.strftime("%Y-08-%dT%H:%M:%S.000Z")
             to_str   = to_dt_utc.strftime("%Y-%m-%dT%H:%M:%S.000Z")
 
@@ -993,7 +975,6 @@ def _fetch_and_write_csv(total_records_needed: int = TOTAL_RECORDS_NEEDED) -> bo
                 params = {"from": from_str, "to": to_str, "page": page_num, "perPage": PER_PAGE}
                 response = requests.get(API_URL, headers=headers, params=params, timeout=15)
                 if response.status_code == 401:
-                    # reintentar token una vez
                     if not obtener_nuevo_token():
                         return False
                     headers["Authorization"] = f"Bearer {TOKEN}"
@@ -1006,25 +987,38 @@ def _fetch_and_write_csv(total_records_needed: int = TOTAL_RECORDS_NEEDED) -> bo
                 if len(searches_on_page) < PER_PAGE:
                     break
 
-            all_searches = all_searches[:total_records_needed]
-
-            # Calcular hash simple del lote para evitar reescrituras innecesarias
-            payload_keys = []
+            # Filtra SOLO las búsquedas de la galería indicada
+            filtered = []
             for s in all_searches:
+                try:
+                    g = (((s or {}).get("payload", {}) or {}).get("image", {}) or {}).get("gallery", {}) or {}
+                    gid = g.get("id")
+                    if gid == gallery_id:
+                        filtered.append(s)
+                except Exception:
+                    continue
+
+            filtered = filtered[:total_records_needed]
+
+            # Hash para esta galería
+            payload_keys = []
+            for s in filtered:
                 sid = s.get("id", "")
                 t = (s.get("result", {}).get("image", {}) or {}).get("time", "")
                 camid = (s.get("payload", {}).get("camera", {}) or {}).get("id", "")
                 payload_keys.append(f"{sid}|{t}|{camid}")
             new_hash = hash("|".join(payload_keys))
-            if new_hash == _last_fetch_hash:
+            if new_hash == _last_fetch_hash_by.get(gallery_id):
                 return False
 
-            with CSV_FILE.open(mode="w", newline="", encoding="utf-8") as f:
+            # Escribir CSV
+            with csv_path.open(mode="w", newline="", encoding="utf-8") as f:
                 writer = csv.writer(f)
                 writer.writerow(["fecha", "hora", "nombre_persona", "conteo", "camara", "search_id", "camera_id", "ts_utc"])
-                for search in all_searches:
+                for search in filtered:
                     if not search.get("payload") or not search["payload"].get("image"):
                         continue
+
                     original_filename = search["payload"]["image"].get("originalFilename")
                     ts_raw = (search.get("result", {}).get("image", {}) or {}).get("time")
                     camera_obj = (search.get("payload", {}).get("camera", {}) or {}) or {}
@@ -1032,14 +1026,15 @@ def _fetch_and_write_csv(total_records_needed: int = TOTAL_RECORDS_NEEDED) -> bo
                     camera_id = camera_obj.get("id", "")
                     search_id = search.get("id", "")
 
-                    entry = gallery_cache.get(original_filename, {})
+                    # nombre desde el cache de ESTA galería
+                    entry = GALLERY_CACHE[gallery_id].get(original_filename, {})
                     metadata = entry.get("metadata", {}) if entry else {}
                     person_name = metadata.get("name", "Nombre Desconocido")
 
                     try:
                         # VerifyFaces time viene como "%Y%m%d%H%M%S.%f"
                         dt_utc  = datetime.strptime(ts_raw, "%Y%m%d%H%M%S.%f")
-                        # Ajuste a hora local (Ecuador, -05:00) — si fuese necesario
+                        # Ajuste a America/Guayaquil (-05:00) si aplica
                         dt_local = dt_utc - timedelta(hours=5)
                         fecha_str = dt_local.date().isoformat()
                         hora_str  = dt_local.strftime("%H:%M:%S")
@@ -1048,41 +1043,63 @@ def _fetch_and_write_csv(total_records_needed: int = TOTAL_RECORDS_NEEDED) -> bo
                     except Exception:
                         continue
 
-            _last_fetch_hash = new_hash
-            print(f"Ingesta: escrito CSV con {len(all_searches)} registros")
+            _last_fetch_hash_by[gallery_id] = new_hash
+            print(f"Ingesta[{gallery_id}]: escrito CSV {csv_path.name} con {len(filtered)} registros")
             return True
 
         except requests.exceptions.RequestException as e:
-            print(f"Ingesta: error de red/API: {e}")
+            print(f"Ingesta[{gallery_id}]: error de red/API: {e}")
             return False
         except Exception as e:
-            print(f"Ingesta: error inesperado: {e}")
+            print(f"Ingesta[{gallery_id}]: error inesperado: {e}")
             return False
 
 
 def background_worker():
-    """Hilo que ingesta nuevos registros periódicamente."""
+    """Hilo que ingesta nuevos registros para ambas galerías periódicamente."""
     while not _stop_event.is_set():
         try:
-            _fetch_and_write_csv(TOTAL_RECORDS_NEEDED)
+            for gid in GALLERY_IDS:
+                _fetch_and_write_csv_for_gallery(gid, TOTAL_RECORDS_NEEDED)
         finally:
             _stop_event.wait(FETCH_PERIOD_SECONDS)
+
+
+def _get_resources_for_gallery(gallery_id: int):
+    csv_path = CSV_FILES.get(gallery_id)
+    person_img_map = PERSON_IMG_MAP_BY.get(gallery_id, {})
+    return csv_path, person_img_map
 
 
 # =========================
 # Endpoints
 # =========================
+
 @app.route("/")
 def index():
     _ensure_background_started()
-    registros, agg, agg_hora_latest, fechas, personas, personas_total = leer_csv(CSV_FILE)
-    estado = construir_estado_dashboard(registros, agg, agg_hora_latest, fechas, personas, personas_total, PERSON_IMG_MAP)
-    return render_template_string(construir_html_dashboard_bootstrap(estado))
+    gallery_id = EMP_GALLERY_ID
+    csv_path, person_img_map = _get_resources_for_gallery(gallery_id)
+    registros, agg, agg_hora_latest, fechas, personas, personas_total = leer_csv(csv_path)
+    estado = construir_estado_dashboard(registros, agg, agg_hora_latest, fechas, personas, personas_total, person_img_map)
+    return render_template_string(construir_html_dashboard_bootstrap(estado, gallery_id=gallery_id, titulo="Dashboard Empleados"))
+
+
+@app.route("/socios")
+def socios():
+    _ensure_background_started()
+    gallery_id = SOC_GALLERY_ID
+    csv_path, person_img_map = _get_resources_for_gallery(gallery_id)
+    registros, agg, agg_hora_latest, fechas, personas, personas_total = leer_csv(csv_path)
+    estado = construir_estado_dashboard(registros, agg, agg_hora_latest, fechas, personas, personas_total, person_img_map)
+    return render_template_string(construir_html_dashboard_bootstrap(estado, gallery_id=gallery_id, titulo="Dashboard Socios"))
 
 
 @app.route("/api/stats")
 def api_stats():
-    registros, _, _, _, _, _ = leer_csv(CSV_FILE)
+    # Por compatibilidad: entrega stats agregadas de empleados (ruta antigua)
+    csv_path, _ = _get_resources_for_gallery(EMP_GALLERY_ID)
+    registros, _, _, _, _, _ = leer_csv(csv_path)
     total = sum((r.get("conteo", 0) or 0) for r in registros) if registros else 0
     ultima = None
     for r in registros:
@@ -1103,7 +1120,14 @@ def api_stats():
 
 @app.route("/stream")
 def stream():
-    _ensure_background_started()  # ver #3
+    _ensure_background_started()
+    try:
+        gallery_id = int(request.args.get("gallery", str(EMP_GALLERY_ID)))
+    except Exception:
+        gallery_id = EMP_GALLERY_ID
+
+    csv_path, person_img_map = _get_resources_for_gallery(gallery_id)
+
     headers = {
         "Content-Type": "text/event-stream",
         "Cache-Control": "no-cache",
@@ -1113,22 +1137,21 @@ def stream():
 
     def gen():
         last_mtime = None
-        keepalive_every = 15  # segundos
+        keepalive_every = 15
         last_ping = time.monotonic()
         try:
             while not _stop_event.is_set():
                 try:
-                    current_mtime = os.path.getmtime(CSV_FILE) if CSV_FILE.exists() else None
+                    current_mtime = os.path.getmtime(csv_path) if csv_path.exists() else None
                 except Exception:
                     current_mtime = None
 
                 if current_mtime and current_mtime != last_mtime:
                     last_mtime = current_mtime
-                    registros, agg, agg_hora_latest, fechas, personas, personas_total = leer_csv(CSV_FILE)
-                    estado = construir_estado_dashboard(registros, agg, agg_hora_latest, fechas, personas, personas_total, PERSON_IMG_MAP)
+                    registros, agg, agg_hora_latest, fechas, personas, personas_total = leer_csv(csv_path)
+                    estado = construir_estado_dashboard(registros, agg, agg_hora_latest, fechas, personas, personas_total, person_img_map)
                     yield f"event: update\ndata: {json.dumps(estado, ensure_ascii=False)}\n\n"
 
-                # keep-alive para que el proxy no cierre el socket
                 now = time.monotonic()
                 if now - last_ping >= keepalive_every:
                     yield ": keep-alive\n\n"
@@ -1140,7 +1163,7 @@ def stream():
             return
         except Exception:
             try:
-                yield "event: error\ndata: {\"msg\":\"sse-internal-error\"}\n\n"
+                yield "event: error\ndata: {{\"msg\":\"sse-internal-error\"}}\n\n"
             except Exception:
                 pass
             return
@@ -1148,26 +1171,26 @@ def stream():
     return Response(gen(), headers=headers)
 
 
+# =========================
+# Arranque (opcional: test de galería)
+# =========================
 
-# =========================
-# Arranque
-# =========================
-def obtener_imagenes_galeria():
+def obtener_imagenes_galeria(gallery_id: int = EMP_GALLERY_ID):
     """Prueba rápida de acceso a galería (logs)."""
     global TOKEN
     if not TOKEN:
         if not obtener_nuevo_token():
             print("Error: No se pudo obtener un token de autenticación.")
             return
-    gallery_url = "https://dashboard-api.verifyfaces.com/companies/54/galleries/531"
+    gallery_url = f"https://dashboard-api.verifyfaces.com/companies/54/galleries/{gallery_id}"
     headers = {"Authorization": f"Bearer {TOKEN}"}
-    params = {"perPage": 100, "page": 1}
+    params = {"perPage": 50, "page": 1}
     try:
-        print("Haciendo llamada a la API de la galería...")
+        print(f"Haciendo llamada a la API de la galería {gallery_id}...")
         response = requests.get(gallery_url, headers=headers, params=params, timeout=10)
         response.raise_for_status()
         _ = response.json()
-        print("Respuesta OK a la API de la galería")
+        print(f"Respuesta OK a la API de la galería {gallery_id}")
     except requests.exceptions.HTTPError as e:
         print(f"Error HTTP al obtener imágenes: {e.response.status_code} - {e.response.text}")
     except requests.exceptions.RequestException as e:
@@ -1177,7 +1200,13 @@ def obtener_imagenes_galeria():
 
 
 if __name__ == "__main__":
-    obtener_imagenes_galeria()
+    # Tests rápidos (opcionales)
+    try:
+        obtener_imagenes_galeria(EMP_GALLERY_ID)
+        obtener_imagenes_galeria(SOC_GALLERY_ID)
+    except Exception as e:
+        print("Init galleries error:", e)
+
     # Lanzar hilo de ingesta
     t = threading.Thread(target=background_worker, daemon=True)
     t.start()

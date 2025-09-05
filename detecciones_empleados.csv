@@ -1,25 +1,18 @@
 fecha,hora,nombre_persona,conteo,camara,search_id,camera_id,ts_utc
-2025-09-05,10:58:02,Nombre Desconocido,1,Ingreso Principal (lado derecho),47421,1628,2025-09-05T15:58:02.905Z
 2025-09-05,10:58:02,CHRISTIAN PATRICIO BENALCAZAR BARROS,1,Ingreso Principal (lado derecho),47420,1628,2025-09-05T15:58:02.905Z
 2025-09-05,10:23:20,BRYAN STALIN HERNANDEZ MEDRANO,1,Puente,47404,1186,2025-09-05T15:23:20.262Z
-2025-09-05,10:23:19,Nombre Desconocido,1,Puente,47407,1186,2025-09-05T15:23:19.995Z
 2025-09-05,10:23:19,OMAR PAUL HERNANDEZ PABON,1,Puente,47405,1186,2025-09-05T15:23:19.995Z
 2025-09-05,10:21:02,ADALBERTO JOSELITO ZURITA SANABRIA,1,Ingreso Principal (lado derecho),47403,1628,2025-09-05T15:21:02.972Z
 2025-09-05,10:18:11,DIEGO CRISTIAN CABEZAS CABEZAS,1,Ingreso Principal (lado derecho),47401,1628,2025-09-05T15:18:11.438Z
 2025-09-05,10:06:51,JAIME VINICIO AMAGUA UNAHUCHO,1,Ingreso Principal (lado derecho),47394,1628,2025-09-05T15:06:51.105Z
-2025-09-05,08:55:43,Nombre Desconocido,1,Ingreso Principal (lado derecho),47380,1628,2025-09-05T13:55:43.029Z
 2025-09-05,08:55:43,CHRISTIAN PATRICIO BENALCAZAR BARROS,1,Ingreso Principal,47324,1175,2025-09-05T13:55:43.029Z
 2025-09-05,08:41:47,Nicolas Andres Flores Proaño,1,Ingreso Principal (lado derecho),47315,1628,2025-09-05T13:41:47.750Z
 2025-09-05,07:00:28,PATRICIO DANIEL MACAS PAREDES,1,Puente,47273,1186,2025-09-05T12:00:28.544Z
 2025-09-05,06:39:28,JIMMY JHOEL CACHAGO RAMIREZ,1,Puente,47271,1186,2025-09-05T11:39:28.544Z
 2025-09-04,20:18:45,SEGUNDO MANUEL FARINANGO ANAGO,1,Ingreso Principal (lado derecho),47238,1628,2025-09-05T01:18:45.346Z
 2025-09-04,16:03:01,GABRIELA ALEXANDRA MAISINCHO MAISINCHO,1,Ingreso Principal (lado derecho),47199,1628,2025-09-04T21:03:01.528Z
-2025-09-04,14:44:43,Nombre Desconocido,1,Ingreso Principal (lado derecho),47379,1628,2025-09-04T19:44:43.128Z
-2025-09-04,14:36:39,Nombre Desconocido,1,Puente,47408,1186,2025-09-04T19:36:39.781Z
 2025-09-04,14:36:39,OMAR PAUL HERNANDEZ PABON,1,Puente,47406,1186,2025-09-04T19:36:39.781Z
-2025-09-04,14:36:39,Nombre Desconocido,1,Puente,47381,1186,2025-09-04T19:36:39.781Z
 2025-09-04,13:41:30,BYRON SEBASTIAN LAGOS GOMEZ,1,Ingreso Principal (lado derecho),47176,1628,2025-09-04T18:41:30.461Z
-2025-09-04,13:25:13,Nombre Desconocido,1,Ingreso Principal (lado derecho),47378,1628,2025-09-04T18:25:13.394Z
 2025-09-04,13:25:13,CHRISTIAN PATRICIO BENALCAZAR BARROS,1,Ingreso Principal (lado derecho),47164,1628,2025-09-04T18:25:13.394Z
 2025-09-04,13:12:48,GABRIELA ALEXANDRA MAISINCHO MAISINCHO,1,Ingreso Principal (lado derecho),47159,1628,2025-09-04T18:12:48.061Z
 2025-09-04,13:10:49,Johana Virginia Jaramillo Tamayo,1,Ingreso Principal (lado derecho),47155,1628,2025-09-04T18:10:49.394Z
@@ -683,17 +676,3 @@ fecha,hora,nombre_persona,conteo,camara,search_id,camera_id,ts_utc
 2025-08-08,10:03:03,Nombre Desconocido,1,Ingreso Principal (lado derecho),42772,1628,2025-08-08T15:03:03.287Z
 2025-08-08,10:03:03,Nombre Desconocido,1,Ingreso Principal (lado derecho),42771,1628,2025-08-08T15:03:03.287Z
 2025-08-07,20:27:59,Nombre Desconocido,1,Ingreso Principal (lado derecho),42788,1628,2025-08-08T01:27:59.540Z
-2025-08-06,06:41:56,Nombre Desconocido,1,Ingreso Principal (lado derecho),42148,1628,2025-08-06T11:41:56.337Z
-2025-08-05,18:56:26,Nombre Desconocido,1,Ingreso Principal (lado derecho),42083,1628,2025-08-05T23:56:26.596Z
-2025-08-05,18:56:26,Nombre Desconocido,1,Ingreso Principal (lado derecho),42082,1628,2025-08-05T23:56:26.596Z
-2025-08-05,18:56:26,Nombre Desconocido,1,Ingreso Principal (lado derecho),42081,1628,2025-08-05T23:56:26.596Z
-2025-08-05,18:56:26,Nombre Desconocido,1,Ingreso Principal (lado derecho),42080,1628,2025-08-05T23:56:26.596Z
-2025-08-05,18:56:26,Nombre Desconocido,1,Ingreso Principal (lado derecho),42079,1628,2025-08-05T23:56:26.596Z
-2025-08-05,10:08:27,Nombre Desconocido,1,Ingreso Principal (lado derecho),42007,1628,2025-08-05T15:08:27.987Z
-2025-08-05,09:44:41,Nombre Desconocido,1,Ingreso Principal (lado derecho),42003,1628,2025-08-05T14:44:41.048Z
-2025-08-05,09:44:41,Nombre Desconocido,1,Ingreso Principal (lado derecho),42002,1628,2025-08-05T14:44:41.048Z
-2025-08-05,09:44:41,Nombre Desconocido,1,Ingreso Principal (lado derecho),42001,1628,2025-08-05T14:44:41.048Z
-2025-08-05,09:44:41,Nombre Desconocido,1,Ingreso Principal (lado derecho),42000,1628,2025-08-05T14:44:41.048Z
-2025-08-05,09:44:41,Nombre Desconocido,1,Ingreso Principal (lado derecho),41999,1628,2025-08-05T14:44:41.048Z
-2025-08-05,09:44:41,Nombre Desconocido,1,Ingreso Principal (lado derecho),41998,1628,2025-08-05T14:44:41.048Z
-2025-08-05,06:26:07,Nombre Desconocido,1,Vestidor Damas,41957,1177,2025-08-05T11:26:07.313Z
