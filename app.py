@@ -2,7 +2,7 @@ from flask import Flask, Response, render_template_string, request, jsonify
 import requests
 from collections import defaultdict, Counter
 from datetime import datetime, timedelta, timezone
-from dateutil import parser  # si luego lo necesitas
+from dateutil import parser
 import csv
 from pathlib import Path
 import math
@@ -15,10 +15,6 @@ from typing import Optional, Any, Dict
 
 app = Flask(__name__)
 
-# =========================
-# Configuración y estado
-# =========================
-
 # Credenciales y endpoints VerifyFaces
 API_URL = "https://dashboard-api.verifyfaces.com/companies/54/search/realtime"
 AUTH_URL = "https://dashboard-api.verifyfaces.com/auth/login"
@@ -29,17 +25,19 @@ TOKEN = None
 # IDs de galería
 EMP_GALLERY_ID = 531
 SOC_GALLERY_ID = 546
-GALLERY_IDS = [EMP_GALLERY_ID, SOC_GALLERY_ID]
+PROV_GALLERY_ID = 548  # NUEVO: Proveedores
+GALLERY_IDS = [EMP_GALLERY_ID, SOC_GALLERY_ID, PROV_GALLERY_ID]
 
 # CSVs por galería
 CSV_FILES = {
     EMP_GALLERY_ID: Path("detecciones_empleados.csv"),
     SOC_GALLERY_ID: Path("detecciones_socios.csv"),
+    PROV_GALLERY_ID: Path("detecciones_proveedores.csv"),  # NUEVO
 }
 
 # Caches por galería
-GALLERY_CACHE = {gid: {} for gid in GALLERY_IDS}         # originalFilename -> {metadata, image_url}
-PERSON_IMG_MAP_BY = {gid: {} for gid in GALLERY_IDS}     # person_name -> image_url
+GALLERY_CACHE = {gid: {} for gid in GALLERY_IDS}
+PERSON_IMG_MAP_BY = {gid: {} for gid in GALLERY_IDS}
 
 # Hash por galería para evitar escrituras innecesarias
 _last_fetch_hash_by = {gid: None for gid in GALLERY_IDS}
@@ -114,7 +112,7 @@ def obtener_nuevo_token():
 
 def cargar_cache_galeria(gallery_id: int) -> bool:
     """
-    Carga en memoria el cache de la galería indicada (531 empleados, 546 socios).
+    Carga en memoria el cache de la galería indicada (531 empleados, 546 socios, 548 proveedores).
     Llena GALLERY_CACHE[gallery_id] y PERSON_IMG_MAP_BY[gallery_id].
     """
     global TOKEN, GALLERY_CACHE, PERSON_IMG_MAP_BY
@@ -496,11 +494,23 @@ def construir_html_dashboard_bootstrap(estado: dict, gallery_id: int, titulo: st
     times_by_json = json.dumps(estado.get("times_by", {}))
     js_last_ts = json.dumps(estado.get("last_ts_iso", ""))
 
-    # rutas y toggle
+    # rutas y estado activo
     ruta_empleados = "/"
     ruta_socios = "/socios"
+    ruta_proveedores = "/proveedores"
     activo_empleados = "active" if gallery_id == EMP_GALLERY_ID else ""
     activo_socios = "active" if gallery_id == SOC_GALLERY_ID else ""
+    activo_proveedores = "active" if gallery_id == PROV_GALLERY_ID else ""
+
+    # etiqueta del botón según la galería actual
+    if gallery_id == EMP_GALLERY_ID:
+        etiqueta_actual = "Empleados"
+    elif gallery_id == SOC_GALLERY_ID:
+        etiqueta_actual = "Socios"
+    elif gallery_id == PROV_GALLERY_ID:
+        etiqueta_actual = "Proveedores"
+    else:
+        etiqueta_actual = "Galerías"
 
     return f"""<!doctype html>
 <html lang="es">
@@ -521,7 +531,7 @@ def construir_html_dashboard_bootstrap(estado: dict, gallery_id: int, titulo: st
   * {{ box-sizing: border-box; }}
   html, body {{ margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: ui-sans-serif, system-ui; }}
   .wrap {{ max-width: 1200px; margin: 32px auto; padding: 0 16px; }}
-  h1 {{ margin: 0 0 16px; font-size: 28px; font-weight: 700; letter-spacing: .2px; }}
+  h1 {{ margin: 0; font-size: 28px; font-weight: 700; letter-spacing: .2px; }}
   .muted {{ color: var(--muted); }}
   .grid {{ display: grid; gap: 16px; }}
   .cards {{ grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-bottom: 20px; }}
@@ -546,10 +556,45 @@ def construir_html_dashboard_bootstrap(estado: dict, gallery_id: int, titulo: st
   .hint {{ font-size: 12px; color: var(--muted); }}
   .right {{ text-align: right; }}
   .footer {{ margin: 16px 0 4px; color: var(--muted); font-size: 12px; }}
+
+  /* ===== Dropdown Galerías ===== */
+  .header-row {{ display:flex; align-items:center; gap:12px; margin: 0 0 16px; }}
+  .header-row .spacer {{ flex: 1 1 auto; }}
+  .dropdown {{ position: relative; }}
+  .dropdown-btn {{
+    display:flex; align-items:center; gap:8px;
+    background:#0b1226; color:var(--text);
+    border:1px solid var(--border); border-radius: 999px;
+    padding: 10px 14px; cursor: pointer; font-weight: 600;
+  }}
+  .dropdown-btn .caret {{
+    display:inline-block; width:0; height:0;
+    border-left:5px solid transparent; border-right:5px solid transparent; border-top:6px solid var(--muted);
+    transform: translateY(1px);
+  }}
+  .dropdown-menu {{
+    position:absolute; right:0; top: calc(100% + 8px);
+    min-width: 220px; display:none; z-index: 20;
+    background: #0b1226; border:1px solid var(--border); border-radius: 12px; padding:6px;
+    box-shadow: 0 12px 24px rgba(0,0,0,.35);
+  }}
+  .dropdown.open .dropdown-menu {{ display:block; }}
+  .dropdown-menu a {{
+    display:block; text-decoration:none; color:var(--text);
+    padding:10px 12px; border-radius: 10px; font-weight: 600;
+  }}
+  .dropdown-menu a:hover {{ background:#10183a; }}
+  .dropdown-menu a.active {{
+    background:#12b981; color:#08111e; border:1px solid #0ea371;
+  }}
+
+  /* ===== Filtros tabla ===== */
   .filters {{ display:flex; gap:8px; flex-wrap:wrap; width:100%; }}
   .filters .group {{ display:flex; gap:8px; align-items:center; }}
   .filters label {{ font-size:12px; color:var(--muted); }}
   .date-input::-webkit-calendar-picker-indicator {{filter: invert(1); cursor: pointer;}}
+
+  /* ===== Detalle lista ===== */
   .detail-col {{ display: flex; flex-direction: column; gap: 6px; padding: 6px 0; }}
   .detail-line {{ display: flex; padding: 6px 0; padding-left: 20px; font-size: 12px; color: #80FF82; }}
   .detail-line .mono {{ font-family: ui-monospace, monospace; }}
@@ -588,15 +633,6 @@ def construir_html_dashboard_bootstrap(estado: dict, gallery_id: int, titulo: st
   .name-cell {{ display:flex; align-items:center; gap:10px; }}
   .avatar {{ width: 28px; height: 28px; border-radius: 50%; background: #0b1226; border: 1px solid var(--border); display:flex; align-items:center; justify-content:center; font-size: 12px; color: #9fb4da; font-weight:700; overflow:hidden; }}
   .avatar img {{ width:100%; height:100%; object-fit:cover; display:block; }}
-
-  .nav-toggle {{ display:flex; gap:8px; margin: 12px 0 20px; }}
-  .nav-toggle a {{
-    text-decoration:none; padding:8px 12px; border-radius:999px; border:1px solid var(--border);
-    color:var(--muted); background:#0b1226;
-  }}
-  .nav-toggle a.active {{
-    color:#08111e; background:#12b981; border-color:#0ea371; font-weight:800;
-  }}
 </style>
 </head>
 <body>
@@ -609,12 +645,22 @@ def construir_html_dashboard_bootstrap(estado: dict, gallery_id: int, titulo: st
       <img src="https://arrayanes.com/wp-content/uploads/2025/05/LOGO-ARRAYANES-1024x653.webp" alt="Arrayanes" style="height:80px; margin-bottom:16px;">
     </span>
 
-    <div class="nav-toggle">
-      <a href="{ruta_empleados}" class="{activo_empleados}">Empleados</a>
-      <a href="{ruta_socios}" class="{activo_socios}">Socios</a>
+    <!-- Encabezado: título a la izquierda, dropdown a la derecha -->
+    <div class="header-row">
+      <h1>{html_escape(titulo)} Arrayanes Country Club</h1>
+      <div class="spacer"></div>
+      <div class="dropdown" id="galDropdown">
+        <button class="dropdown-btn" aria-haspopup="true" aria-expanded="false">
+          {html_escape(etiqueta_actual)}
+          <span class="caret"></span>
+        </button>
+        <div class="dropdown-menu" role="menu" aria-label="Seleccionar galería">
+          <a href="{ruta_empleados}" class="item {activo_empleados}" role="menuitem">Empleados</a>
+          <a href="{ruta_socios}" class="item {activo_socios}" role="menuitem">Socios</a>
+          <a href="{ruta_proveedores}" class="item {activo_proveedores}" role="menuitem">Proveedores</a>
+        </div>
+      </div>
     </div>
-
-    <h1>{html_escape(titulo)} Arrayanes Country Club</h1>
 
     <div class="grid cards">
       <div class="card">
@@ -709,6 +755,39 @@ def construir_html_dashboard_bootstrap(estado: dict, gallery_id: int, titulo: st
   let CURRENT_LAST_TS = {js_last_ts};
   let TIMES_BY = {times_by_json};
 
+  // Dropdown accesible: abrir/cerrar y cerrar al clicar fuera o con ESC
+  (function(){{
+    const dd = document.getElementById('galDropdown');
+    if (!dd) return;
+    const btn = dd.querySelector('.dropdown-btn');
+    const menu = dd.querySelector('.dropdown-menu');
+
+    function close() {{
+      dd.classList.remove('open');
+      btn.setAttribute('aria-expanded', 'false');
+    }}
+
+    btn.addEventListener('click', (e) => {{
+      e.stopPropagation();
+      const nowOpen = !dd.classList.contains('open');
+      if (nowOpen) {{
+        dd.classList.add('open');
+        btn.setAttribute('aria-expanded', 'true');
+      }} else {{
+        close();
+      }}
+    }});
+
+    document.addEventListener('click', (e) => {{
+      if (!dd.contains(e.target)) close();
+    }});
+
+    document.addEventListener('keydown', (e) => {{
+      if (e.key === 'Escape') close();
+    }});
+  }})();
+
+  // Filtro rápido texto
   (function(){{
     const input = document.getElementById('filterAgg');
     const tbody = document.getElementById('tbodyAgg');
@@ -722,6 +801,7 @@ def construir_html_dashboard_bootstrap(estado: dict, gallery_id: int, titulo: st
     }});
   }})();
 
+  // Filtros avanzados
   (function(){{
     const tbody = document.getElementById('tbodyAgg');
     const dateStart = document.getElementById('dateStart');
@@ -740,9 +820,7 @@ def construir_html_dashboard_bootstrap(estado: dict, gallery_id: int, titulo: st
       return isNaN(dt.getTime()) ? null : dt;
     }}
 
-    function parseCellDateStr(s) {{
-      return normalizeDateStr(s.trim());
-    }}
+    function parseCellDateStr(s) {{ return normalizeDateStr(s.trim()); }}
 
     window.applySpecificFilters = function applySpecificFilters() {{
       const start = normalizeDateStr(dateStart.value);
@@ -802,6 +880,7 @@ def construir_html_dashboard_bootstrap(estado: dict, gallery_id: int, titulo: st
     }}
   }}
 
+  // Expandir detalle por nombre
   (function attachExpandHandler(){{
     const tbody = document.getElementById('tbodyAgg');
     if (!tbody) return;
@@ -864,6 +943,7 @@ def construir_html_dashboard_bootstrap(estado: dict, gallery_id: int, titulo: st
     }}, 5000);
   }}
 
+  // Charts
   const personasCtx = document.getElementById('personasChart').getContext('2d');
   const top10Ctx    = document.getElementById('top10Chart').getContext('2d');
   const weekCtx     = document.getElementById('thisWeekChart').getContext('2d');
@@ -923,7 +1003,7 @@ def construir_html_dashboard_bootstrap(estado: dict, gallery_id: int, titulo: st
     CURRENT_LAST_TS = estado.last_ts_iso || CURRENT_LAST_TS;
   }}
 
-  // IMPORTANTE: SSE por galería
+  // SSE: ojo que usa la galería actual
   const es = new EventSource('/stream?gallery={gallery_id}');
   es.addEventListener('update', (ev) => {{
     try {{
@@ -936,6 +1016,7 @@ def construir_html_dashboard_bootstrap(estado: dict, gallery_id: int, titulo: st
 </body>
 </html>
 """
+
 
 
 # =========================
@@ -965,6 +1046,7 @@ def _fetch_and_write_csv_for_gallery(gallery_id: int, total_records_needed: int 
             from_dt_utc = datetime.now(timezone.utc) - timedelta(days=1)
             to_dt_utc   = datetime.now(timezone.utc)
 
+            # Nota: se conserva el formato original del código
             from_str = from_dt_utc.strftime("%Y-08-%dT%H:%M:%S.000Z")
             to_str   = to_dt_utc.strftime("%Y-%m-%dT%H:%M:%S.000Z")
 
@@ -1056,7 +1138,7 @@ def _fetch_and_write_csv_for_gallery(gallery_id: int, total_records_needed: int 
 
 
 def background_worker():
-    """Hilo que ingesta nuevos registros para ambas galerías periódicamente."""
+    """Hilo que ingesta nuevos registros para todas las galerías periódicamente."""
     while not _stop_event.is_set():
         try:
             for gid in GALLERY_IDS:
@@ -1066,9 +1148,16 @@ def background_worker():
 
 
 def _get_resources_for_gallery(gallery_id: int):
-    csv_path = CSV_FILES.get(gallery_id)
-    person_img_map = PERSON_IMG_MAP_BY.get(gallery_id, {})
+    # Garantiza que csv_path sea siempre Path (no Optional)
+    if gallery_id in CSV_FILES:
+        csv_path: Path = CSV_FILES[gallery_id]
+        person_img_map = PERSON_IMG_MAP_BY.get(gallery_id, {})
+    else:
+        # Fallback seguro a empleados si llega un id desconocido
+        csv_path = CSV_FILES[EMP_GALLERY_ID]
+        person_img_map = PERSON_IMG_MAP_BY.get(EMP_GALLERY_ID, {})
     return csv_path, person_img_map
+
 
 
 # =========================
@@ -1093,6 +1182,16 @@ def socios():
     registros, agg, agg_hora_latest, fechas, personas, personas_total = leer_csv(csv_path)
     estado = construir_estado_dashboard(registros, agg, agg_hora_latest, fechas, personas, personas_total, person_img_map)
     return render_template_string(construir_html_dashboard_bootstrap(estado, gallery_id=gallery_id, titulo="Dashboard Socios"))
+
+
+@app.route("/proveedores")  # NUEVO
+def proveedores():
+    _ensure_background_started()
+    gallery_id = PROV_GALLERY_ID
+    csv_path, person_img_map = _get_resources_for_gallery(gallery_id)
+    registros, agg, agg_hora_latest, fechas, personas, personas_total = leer_csv(csv_path)
+    estado = construir_estado_dashboard(registros, agg, agg_hora_latest, fechas, personas, personas_total, person_img_map)
+    return render_template_string(construir_html_dashboard_bootstrap(estado, gallery_id=gallery_id, titulo="Dashboard Proveedores"))
 
 
 @app.route("/api/stats")
@@ -1204,6 +1303,7 @@ if __name__ == "__main__":
     try:
         obtener_imagenes_galeria(EMP_GALLERY_ID)
         obtener_imagenes_galeria(SOC_GALLERY_ID)
+        obtener_imagenes_galeria(PROV_GALLERY_ID)  # NUEVO
     except Exception as e:
         print("Init galleries error:", e)
 
