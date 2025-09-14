@@ -12,6 +12,11 @@ import threading
 import time
 import os
 from typing import Optional, Any, Dict
+from flask import session, redirect, url_for, g
+from functools import wraps
+import requests
+from oauthlib.oauth2 import WebApplicationClient
+import json # Asegúrate de que esta línea esté presente
 
 app = Flask(__name__)
 
@@ -21,6 +26,23 @@ AUTH_URL = "https://dashboard-api.verifyfaces.com/auth/login"
 AUTH_EMAIL = "eangulo@blocksecurity.com.ec"
 AUTH_PASSWORD = "Scarling//07052022.?"
 TOKEN = None
+
+# --- Configuración de Autenticación (añade esto al principio) ---
+GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
+GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
+
+if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
+    raise ValueError("Las variables de entorno GOOGLE_CLIENT_ID y GOOGLE_CLIENT_SECRET deben estar configuradas.")
+
+
+GOOGLE_DISCOVERY_URL = "https://accounts.google.com/.well-known/openid-configuration"
+app.secret_key = os.environ.get("SECRET_KEY") or "your-super-secret-key-123"
+
+# Lista de usuarios autorizados (puedes cargarla desde una variable de entorno)
+AUTHORIZED_USERS = ["eangulo@blocksecurity.com.ec", "admin@arrayanes.com"]
+
+# Configuración del cliente OAuth 2
+client = WebApplicationClient(GOOGLE_CLIENT_ID)
 
 # IDs de galería
 EMP_GALLERY_ID = 531
@@ -55,6 +77,17 @@ _stop_event = threading.Event()
 _worker_started = False
 _worker_lock = threading.Lock()
 
+
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if "user_email" not in session or session["user_email"] not in AUTHORIZED_USERS:
+            return redirect(url_for("login"))
+        return f(*args, **kwargs)
+    return decorated_function
+
+def get_google_provider_cfg():
+    return requests.get(GOOGLE_DISCOVERY_URL).json()
 
 def _ensure_background_started():
     """Lanza el worker de ingesta una sola vez."""
@@ -1164,7 +1197,94 @@ def _get_resources_for_gallery(gallery_id: int):
 # Endpoints
 # =========================
 
+@app.route("/login")
+def login():
+    return render_template_string("""
+    <!doctype html>
+    <html lang="es">
+    <head><title>Login</title><style>
+        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background: #0b1020; color: #fff; }
+        .login-box { padding: 40px; border-radius: 8px; background: #12172a; text-align: center; border: 1px solid #223052; }
+        .login-box h1 { margin-bottom: 20px; color: #e8eefc; }
+        .google-btn {
+            background: #fff; color: #000; padding: 10px 20px; border-radius: 4px; text-decoration: none; font-weight: bold;
+            display: inline-flex; align-items: center; gap: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .google-btn img { height: 20px; }
+    </style></head>
+    <body>
+        <div class="login-box">
+            <h1>Iniciar Sesión</h1>
+            <a href="/login_google" class="google-btn">
+                <img src="https://www.google.com/favicon.ico" alt="Google icon">
+                Iniciar sesión con Google
+            </a>
+        </div>
+    </body>
+    </html>
+    """)
+
+@app.route("/login_google")
+def login_google():
+    google_provider_cfg = get_google_provider_cfg()
+    authorization_endpoint = google_provider_cfg["authorization_endpoint"]
+    request_uri = client.prepare_request_uri(
+        authorization_endpoint,
+        redirect_uri=request.base_url.replace("/login_google", "/callback"),
+        scope=["openid", "email", "profile"],
+    )
+    return redirect(request_uri)
+
+@app.route("/callback")
+def callback():
+    code = request.args.get("code")
+    google_provider_cfg = get_google_provider_cfg()
+    token_endpoint = google_provider_cfg["token_endpoint"]
+    token_url, headers, body = client.prepare_token_request(
+        token_endpoint,
+        authorization_response=request.url,
+        redirect_url=request.base_url,
+        code=code
+    )
+    token_response = requests.post(
+        token_url,
+        headers=headers,
+        data=body,
+        auth=(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET),
+    ).json()
+
+    if "id_token" not in token_response:
+        return "Failed to get ID token.", 400
+
+    client.parse_request_body_response(json.dumps(token_response))
+    userinfo_endpoint = google_provider_cfg["userinfo_endpoint"]
+    uri, headers, body = client.add_token(userinfo_endpoint)
+    userinfo_response = requests.get(uri, headers=headers, data=body).json()
+
+    if userinfo_response.get("email_verified"):
+        session["user_email"] = userinfo_response["email"]
+        if session["user_email"] in AUTHORIZED_USERS:
+            return redirect(url_for("index"))
+        else:
+            return "Unauthorized user.", 403
+    else:
+        return "User email not available or not verified.", 400
+
+@app.route("/logout")
+def logout():
+    session.pop("user_email", None)
+    return redirect(url_for("login"))
+
+@app.before_request
+def before_request_func():
+    g.user = None
+    if "user_email" in session:
+        g.user = session["user_email"]
+
+
 @app.route("/")
+@login_required
 def index():
     _ensure_background_started()
     gallery_id = EMP_GALLERY_ID
@@ -1175,6 +1295,7 @@ def index():
 
 
 @app.route("/socios")
+@login_required
 def socios():
     _ensure_background_started()
     gallery_id = SOC_GALLERY_ID
@@ -1184,7 +1305,8 @@ def socios():
     return render_template_string(construir_html_dashboard_bootstrap(estado, gallery_id=gallery_id, titulo="Dashboard Socios"))
 
 
-@app.route("/proveedores")  # NUEVO
+@app.route("/proveedores")
+@login_required
 def proveedores():
     _ensure_background_started()
     gallery_id = PROV_GALLERY_ID
