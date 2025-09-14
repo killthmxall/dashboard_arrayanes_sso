@@ -39,7 +39,7 @@ GOOGLE_DISCOVERY_URL = "https://accounts.google.com/.well-known/openid-configura
 app.secret_key = os.environ.get("SECRET_KEY") or "your-super-secret-key-123"
 
 # Lista de usuarios autorizados (puedes cargarla desde una variable de entorno)
-AUTHORIZED_USERS = ["killthmxall@gmail.com", "jronquillolugo@gmail.com"]
+AUTHORIZED_USERS = ["killthmxall@gmail.com", "jronquillolugo@gmail.com", "paul.hernandez@arrayanes.com"]
 
 # Configuración del cliente OAuth 2
 client = WebApplicationClient(GOOGLE_CLIENT_ID)
