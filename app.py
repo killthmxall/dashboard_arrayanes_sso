@@ -38,7 +38,7 @@ if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
 GOOGLE_DISCOVERY_URL = "https://accounts.google.com/.well-known/openid-configuration"
 app.secret_key = os.environ.get("SECRET_KEY") or "your-super-secret-key-123"
 
-# Lista de usuarios autorizados (puedes cargarla desde una variable de entorno)
+# Lista de usuarios autorizados
 AUTHORIZED_USERS = [
     "killthmxall@gmail.com",
     "jronquillolugo@gmail.com",
@@ -54,7 +54,7 @@ client = WebApplicationClient(GOOGLE_CLIENT_ID)
 # IDs de galería
 EMP_GALLERY_ID = 531
 SOC_GALLERY_ID = 546
-PROV_GALLERY_ID = 548  # NUEVO: Proveedores
+PROV_GALLERY_ID = 548
 GALLERY_IDS = [EMP_GALLERY_ID, SOC_GALLERY_ID, PROV_GALLERY_ID]
 
 # CSVs por galería
@@ -1222,6 +1222,7 @@ def login():
     </style></head>
     <body>
         <div class="login-box">
+            <span><img src="https://res.cloudinary.com/df5olfhrq/image/upload/v1756228647/logo_tpskcd.png" alt="BlockSecurity" style="height:80px; margin-bottom:16px;"></span>
             <h1>Iniciar Sesión</h1>
             <a href="/login_google" class="google-btn">
                 <img src="https://www.google.com/favicon.ico" alt="Google icon">
