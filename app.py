@@ -39,7 +39,14 @@ GOOGLE_DISCOVERY_URL = "https://accounts.google.com/.well-known/openid-configura
 app.secret_key = os.environ.get("SECRET_KEY") or "your-super-secret-key-123"
 
 # Lista de usuarios autorizados (puedes cargarla desde una variable de entorno)
-AUTHORIZED_USERS = ["killthmxall@gmail.com", "jronquillolugo@gmail.com", "paul.hernandez@arrayanes.com"]
+AUTHORIZED_USERS = [
+    "killthmxall@gmail.com",
+    "jronquillolugo@gmail.com",
+    "paul.hernandez@arrayanes.com",
+    "coord.seguridad@arrayanes.com",
+    "johana.jaramillo@arrayanes.com",
+    "atencionalsocio@arrayanes.com"
+]
 
 # Configuración del cliente OAuth 2
 client = WebApplicationClient(GOOGLE_CLIENT_ID)
@@ -441,7 +448,7 @@ def construir_estado_dashboard(registros, agg, agg_hora_latest, fechas, personas
 
     # Esta semana (12 días atrás a hoy, filtrando existentes)
     hoy = datetime.now().date()
-    ultimos = [(hoy - timedelta(days=i)).strftime("%Y-%m-%d") for i in range(11, -1, -1)]
+    ultimos = [(hoy - timedelta(days=i)).strftime("%Y-%m-%d") for i in range(8, -1, -1)]
     fechas_semana = [f for f in ultimos if f in fechas]
 
     datasets_all = []
