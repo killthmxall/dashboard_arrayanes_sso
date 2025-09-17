@@ -706,11 +706,11 @@ def construir_html_dashboard_bootstrap(estado: dict, gallery_id: int, titulo: st
       <div class="card">
         <h3>Cobertura de galería</h3>
         <div class="val" id="kpi_gallery_pct">{percent_gallery:.1f}%</div>
-        <div class="muted"><span id="kpi_gallery_rec">{recognized_in_gallery}</span>/<span id="kpi_gallery_total">{total_gallery_persons}</span> personas reconocidas</div>
+        <div class="muted"><span id="kpi_gallery_rec">{recognized_in_gallery}</span>/<span id="kpi_gallery_total">{total_gallery_persons}</span> personas en la galería</div>
       </div>
 
       <div class="card">
-        <h3>Ingresos hoy</h3>
+        <h3>Reconocimientos hoy</h3>
         <div class="val" id="kpi_ingresos">{ingresos_hoy}</div>
         <div class="muted">Suma de detecciones de</div><div id="kpi_hoy">{hoy_iso}</div>
       </div>
@@ -745,7 +745,7 @@ def construir_html_dashboard_bootstrap(estado: dict, gallery_id: int, titulo: st
     </div>
 
     <div class="section">
-      <div class="toolbar"><h2 style="margin-right:auto">Detecciones por persona y fecha (Esta semana)</h2></div>
+      <div class="toolbar"><h2 style="margin-right:auto">Detecciones esta semana</h2></div>
       <canvas id="thisWeekChart" height="100"></canvas>
     </div>
 
