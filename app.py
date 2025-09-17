@@ -16,7 +16,7 @@ from flask import session, redirect, url_for, g
 from functools import wraps
 import requests
 from oauthlib.oauth2 import WebApplicationClient
-import json # Asegúrate de que esta línea esté presente
+import json
 
 app = Flask(__name__)
 
@@ -27,7 +27,7 @@ AUTH_EMAIL = "eangulo@blocksecurity.com.ec"
 AUTH_PASSWORD = "Scarling//07052022.?"
 TOKEN = None
 
-# --- Configuración de Autenticación (añade esto al principio) ---
+# Configuración de Autenticación
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
 
@@ -61,7 +61,7 @@ GALLERY_IDS = [EMP_GALLERY_ID, SOC_GALLERY_ID, PROV_GALLERY_ID]
 CSV_FILES = {
     EMP_GALLERY_ID: Path("detecciones_empleados.csv"),
     SOC_GALLERY_ID: Path("detecciones_socios.csv"),
-    PROV_GALLERY_ID: Path("detecciones_proveedores.csv"),  # NUEVO
+    PROV_GALLERY_ID: Path("detecciones_proveedores.csv"),
 }
 
 # Caches por galería
@@ -97,7 +97,6 @@ def get_google_provider_cfg():
     return requests.get(GOOGLE_DISCOVERY_URL).json()
 
 def _ensure_background_started():
-    """Lanza el worker de ingesta una sola vez."""
     global _worker_started
     if _worker_started:
         return
@@ -448,7 +447,7 @@ def construir_estado_dashboard(registros, agg, agg_hora_latest, fechas, personas
 
     # Esta semana (12 días atrás a hoy, filtrando existentes)
     hoy = datetime.now().date()
-    ultimos = [(hoy - timedelta(days=i)).strftime("%Y-%m-%d") for i in range(8, -1, -1)]
+    ultimos = [(hoy - timedelta(days=i)).strftime("%Y-%m-%d") for i in range(7, -1, -1)]
     fechas_semana = [f for f in ultimos if f in fechas]
 
     datasets_all = []
@@ -740,7 +739,7 @@ def construir_html_dashboard_bootstrap(estado: dict, gallery_id: int, titulo: st
     </div>
 
     <div class="section">
-      <div class="toolbar"><h2 style="margin-right:auto">Detecciones por persona y fecha (Top 10 personas)</h2></div>
+      <div class="toolbar"><h2 style="margin-right:auto">Detecciones este mes</h2></div>
       <canvas id="top10Chart" height="100"></canvas>
     </div>
 
@@ -1178,7 +1177,6 @@ def _fetch_and_write_csv_for_gallery(gallery_id: int, total_records_needed: int 
 
 
 def background_worker():
-    """Hilo que ingesta nuevos registros para todas las galerías periódicamente."""
     while not _stop_event.is_set():
         try:
             for gid in GALLERY_IDS:
@@ -1188,12 +1186,10 @@ def background_worker():
 
 
 def _get_resources_for_gallery(gallery_id: int):
-    # Garantiza que csv_path sea siempre Path (no Optional)
     if gallery_id in CSV_FILES:
         csv_path: Path = CSV_FILES[gallery_id]
         person_img_map = PERSON_IMG_MAP_BY.get(gallery_id, {})
     else:
-        # Fallback seguro a empleados si llega un id desconocido
         csv_path = CSV_FILES[EMP_GALLERY_ID]
         person_img_map = PERSON_IMG_MAP_BY.get(EMP_GALLERY_ID, {})
     return csv_path, person_img_map
@@ -1326,7 +1322,6 @@ def proveedores():
 
 @app.route("/api/stats")
 def api_stats():
-    # Por compatibilidad: entrega stats agregadas de empleados (ruta antigua)
     csv_path, _ = _get_resources_for_gallery(EMP_GALLERY_ID)
     registros, _, _, _, _, _ = leer_csv(csv_path)
     total = sum((r.get("conteo", 0) or 0) for r in registros) if registros else 0
@@ -1429,11 +1424,10 @@ def obtener_imagenes_galeria(gallery_id: int = EMP_GALLERY_ID):
 
 
 if __name__ == "__main__":
-    # Tests rápidos (opcionales)
     try:
         obtener_imagenes_galeria(EMP_GALLERY_ID)
         obtener_imagenes_galeria(SOC_GALLERY_ID)
-        obtener_imagenes_galeria(PROV_GALLERY_ID)  # NUEVO
+        obtener_imagenes_galeria(PROV_GALLERY_ID)
     except Exception as e:
         print("Init galleries error:", e)
 
