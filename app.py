@@ -684,21 +684,21 @@ def construir_html_dashboard_bootstrap(estado: dict, gallery_id: int, titulo: st
       <img src="https://arrayanes.com/wp-content/uploads/2025/05/LOGO-ARRAYANES-1024x653.webp" alt="Arrayanes" style="height:80px; margin-bottom:16px;">
     </span>
 
-    span style="padding: 5px">
+    <span style="padding: 5px">
         <a href="https://dashboard.verifyfaces.com/auth/sign-in?_gl=1*1kx5vdz*_ga*OTc2MDk1NjU3LjE3NTgyMDk5MTI.*_ga_4GBK09CZNS*czE3NTgyMDk5MTIkdDE3NTgyMDk5MTIkajYwJGwwJGgw" target="_blank">
-        <img src="https://verifyfaces.com/wp-content/uploads/2023/04/verifyfaces.svg" alt="VerifyFaces" style="height:60px; margin-bottom:16px; margin-left: 20px;">
+        <img src="https://www.een.com/wp-content/uploads/2024/02/verifyfaces_Tech-Partner.png" alt="VerifyFaces" style="height:60px; margin-bottom:16px; margin-left: 20px;">
         </a>
     </span>
 
     <span style="padding: 5px">
         <a href="https://blocksecurity.eagleeyenetworks.com/login.html" target="_blank">
-        <img src="https://eaglesecurity.com.ec/wp-content/uploads/2022/10/Eagle-Eye-Networks-scaled.jpg" alt="Eagle Eye Networks" style="height:60px; margin-bottom:16px; margin-left: 20px;">
+        <img src="https://play-lh.googleusercontent.com/6anJgtZidaXFXsEpvsOHR1O9sS_5sxFOKbu8bsc7HalfJpvSvEzw2e64FAD_taU17Y1d=w240-h480-rw" alt="Eagle Eye Networks" style="height:60px; margin-bottom:16px; margin-left: 20px;">
         </a>
     </span>
 
     <span style="padding: 5px">
         <a href="https://www.brivo.com/login/" target="_blank">
-        <img src="https://www.brivo.com/wp-content/uploads/2022/01/brivo-logo-light.svg" alt="Brivo" style="height:60px; margin-bottom:16px; margin-left: 20px; background-color: #000000;">
+        <img src="https://advantidge.com/wp-content/uploads/2022/04/Brivo_logo.png" alt="Brivo" style="height:60px; margin-bottom:16px; margin-left: 20px; background-color: #000000;">
         </a>
     </span>
 
