@@ -1,37 +1,180 @@
 fecha,hora,nombre_persona,conteo,camara,search_id,camera_id,ts_utc
-2025-09-13,18:36:20,ANDRES ALEJANDRO ARIAS CARRERA,1,Ingreso Principal (lado derecho),49759,1628,2025-09-13T23:36:20.874Z
-2025-09-13,18:18:41,ANDRES ALEJANDRO ARIAS CARRERA,1,Ingreso Principal,49756,1175,2025-09-13T23:18:41.874Z
-2025-09-13,17:38:01,ANDRES ALEJANDRO ARIAS CARRERA,1,Ingreso Principal (lado derecho),49754,1628,2025-09-13T22:38:01.120Z
-2025-09-13,16:51:54,ANDRES ALEJANDRO ARIAS CARRERA,1,Ingreso Principal (lado derecho),49745,1628,2025-09-13T21:51:54.585Z
-2025-09-13,15:02:02,ANDRES ALEJANDRO ARIAS CARRERA,1,Ingreso Principal (lado derecho),49742,1628,2025-09-13T20:02:02.086Z
-2025-09-13,12:41:45,ANDRES ALEJANDRO ARIAS CARRERA,1,Ingreso Principal (lado derecho),49733,1628,2025-09-13T17:41:45.357Z
-2025-09-13,12:18:29,ANDRES ALEJANDRO ARIAS CARRERA,1,Ingreso Principal (lado derecho),49732,1628,2025-09-13T17:18:29.357Z
-2025-09-13,07:02:47,Carlos Mauricio Ortiz Negrete,1,Ingreso Principal,49697,1175,2025-09-13T12:02:47.244Z
-2025-09-12,18:30:55,ANDRES ALEJANDRO ARIAS CARRERA,1,Ingreso Principal,49757,1175,2025-09-12T23:30:55.047Z
-2025-09-12,18:08:20,ANDRES ALEJANDRO ARIAS CARRERA,1,Ingreso Principal,49731,1175,2025-09-12T23:08:20.647Z
-2025-09-12,18:08:20,Nombre Desconocido,1,Ingreso Principal,49724,1175,2025-09-12T23:08:20.647Z
-2025-09-12,16:14:46,ANDRES ALEJANDRO ARIAS CARRERA,1,Ingreso Principal (lado derecho),49730,1628,2025-09-12T21:14:46.042Z
+2025-09-18,14:40:01,OMAR PAUL HERNANDEZ PABON,1,Ingreso Principal (lado izquierdo),51408,1175,2025-09-18T19:40:01.802Z
+2025-09-18,14:16:38,Raul Fernandez Figueiras,1,Ingreso Principal (lado derecho),51398,1628,2025-09-18T19:16:38.070Z
+2025-09-18,12:58:58,Pedro Jose Burneo Montalvo,1,Ingreso Principal (lado derecho),51350,1628,2025-09-18T17:58:58.090Z
+2025-09-18,12:21:56,Angela Maria Sojos Echeverri,1,Ingreso Principal (lado derecho),51361,1628,2025-09-18T17:21:56.677Z
+2025-09-18,12:06:35,Ramiro Willington Meneses Raza,1,Ingreso Principal (lado izquierdo),51345,1175,2025-09-18T17:06:35.630Z
+2025-09-18,11:51:27,Pedro Jose Burneo Montalvo,1,Ingreso Principal (lado derecho),51319,1628,2025-09-18T16:51:27.228Z
+2025-09-18,11:15:19,Veronica Patricia Marin Tobar Subia,1,Ingreso Principal (lado derecho),51284,1628,2025-09-18T16:15:19.939Z
+2025-09-18,10:51:43,Jorge Mario PatiÃ±o GonzÃ¡lez,1,Ingreso Principal (lado derecho),51266,1628,2025-09-18T15:51:43.044Z
+2025-09-18,10:50:40,Juan Carlos Freile Ramadan,1,Ingreso Principal (lado izquierdo),51267,1175,2025-09-18T15:50:40.708Z
+2025-09-18,10:09:21,David SebastiÃ¡n Reyes Santos,1,Ingreso Principal (lado derecho),51245,1628,2025-09-18T15:09:21.300Z
+2025-09-18,10:09:19,David SebastiÃ¡n Reyes Santos,1,Ingreso Principal (lado derecho),51246,1628,2025-09-18T15:09:19.967Z
+2025-09-18,08:51:45,Nombre Desconocido,1,Ingreso Principal (lado derecho),51280,1628,2025-09-18T13:51:45.149Z
+2025-09-18,08:51:45,Jose Ignacio Chiriboga,1,Ingreso Principal (lado derecho),51279,1628,2025-09-18T13:51:45.149Z
+2025-09-18,08:48:58,Marcelo Albuja,1,Ingreso Principal (lado derecho),51281,1628,2025-09-18T13:48:58.210Z
+2025-09-18,08:37:03,Hazem Nicola Tumeh,1,Ingreso Principal (lado derecho),51195,1628,2025-09-18T13:37:03.879Z
+2025-09-18,08:17:09,Carmen Ines Merlo,1,Vestidor Damas,51180,1177,2025-09-18T13:17:09.657Z
+2025-09-18,08:04:01,Jose Luis Murillo,1,Ingreso Principal (lado derecho),51244,1628,2025-09-18T13:04:01.329Z
+2025-09-18,08:04:01,Jose Luis Murillo,1,Ingreso Principal (lado derecho),51171,1628,2025-09-18T13:04:01.329Z
+2025-09-18,08:01:45,Jamil Rehpani,1,Ingreso Principal (lado derecho),51168,1628,2025-09-18T13:01:45.196Z
+2025-09-18,08:01:44,Jamil Rehpani,1,Ingreso Principal (lado derecho),51169,1628,2025-09-18T13:01:44.196Z
+2025-09-18,07:52:12,Kelly Gemelli,1,Ingreso Principal (lado derecho),51161,1628,2025-09-18T12:52:12.865Z
+2025-09-18,07:45:37,Pablo Esteban Arroyo Leon,1,Vestidor Caballeros,51157,1176,2025-09-18T12:45:37.873Z
+2025-09-18,07:34:57,Victor Alfredo Lobato Cueva,1,Ingreso Principal (lado izquierdo),51151,1175,2025-09-18T12:34:57.942Z
+2025-09-18,07:34:56,Victor Alfredo Lobato Cueva,1,Ingreso Principal (lado derecho),51150,1628,2025-09-18T12:34:56.846Z
+2025-09-18,07:31:25,Anibal Ramiro Cazar Ayala,1,Ingreso Principal (lado derecho),51149,1628,2025-09-18T12:31:25.512Z
+2025-09-18,07:24:15,Marcelo Albuja,1,Ingreso Principal (lado derecho),51147,1628,2025-09-18T12:24:15.179Z
+2025-09-18,07:20:58,Claudia Bello,1,Ingreso Principal (lado derecho),51146,1628,2025-09-18T12:20:58.275Z
+2025-09-18,07:19:22,Nicolas Palacios Cruz,1,Ingreso Principal (lado derecho),51144,1628,2025-09-18T12:19:22.208Z
+2025-09-18,07:15:51,Sung Yae Hong Kim,1,Ingreso Principal (lado izquierdo),51142,1175,2025-09-18T12:15:51.635Z
+2025-09-18,07:15:48,Sung Yae Hong Kim,1,Ingreso Principal (lado izquierdo),51143,1175,2025-09-18T12:15:48.302Z
+2025-09-18,07:10:45,Solange Werner,1,Ingreso Principal (lado izquierdo),51140,1175,2025-09-18T12:10:45.569Z
+2025-09-18,06:51:22,Pablo Esteban Arroyo Leon,1,Ingreso Principal (lado izquierdo),51136,1175,2025-09-18T11:51:22.553Z
+2025-09-18,06:28:07,Juan Carlos Bernal,1,Ingreso Principal (lado izquierdo),51133,1175,2025-09-18T11:28:07.216Z
+2025-09-17,19:18:30,Johana Jaramillo,1,Ingreso Principal (lado derecho),51183,1628,2025-09-18T00:18:30.764Z
+2025-09-17,18:51:59,Daniel Esteban Contag Garcia,1,Ingreso Principal (lado derecho),51283,1628,2025-09-17T23:51:59.761Z
+2025-09-17,16:58:28,Regina Scholem Penchansky,1,Ingreso Principal (lado derecho),51317,1628,2025-09-17T21:58:28.715Z
+2025-09-17,16:54:08,Ramiro Alfredo Sotomayor Martinez,1,Ingreso Principal (lado derecho),51322,1628,2025-09-17T21:54:08.991Z
+2025-09-17,16:22:47,Jhonnie Francisco Diaz,1,Ingreso Principal (lado derecho),51402,1628,2025-09-17T21:22:47.023Z
+2025-09-17,16:22:45,Jhonnie Francisco Diaz,1,Ingreso Principal (lado derecho),51401,1628,2025-09-17T21:22:45.356Z
+2025-09-17,16:15:37,Dario Benavides Bucheli,1,Ingreso Principal (lado derecho),51403,1628,2025-09-17T21:15:37.422Z
+2025-09-17,16:06:36,Roberto Aurelio Maldonado CedeÃ±o,1,Ingreso Principal (lado derecho),51405,1628,2025-09-17T21:06:36.310Z
+2025-09-17,15:19:02,Andrés Sebastián Córdova Neira,1,Ingreso Principal (lado derecho),51028,1628,2025-09-17T20:19:02.932Z
+2025-09-17,15:02:23,Johana Jaramillo,1,Ingreso Principal (lado derecho),51012,1628,2025-09-17T20:02:23.291Z
+2025-09-17,14:05:25,Johana Jaramillo,1,Ingreso Principal (lado derecho),50969,1628,2025-09-17T19:05:25.239Z
+2025-09-17,13:32:02,Carolina Borrero,1,Ingreso Principal (lado derecho),51110,1628,2025-09-17T18:32:02.243Z
+2025-09-17,13:03:53,Jose Antonio Cornejo Mignone,1,Ingreso Principal (lado derecho),50947,1628,2025-09-17T18:03:53.572Z
+2025-09-17,13:03:53,Jose Antonio Cornejo Mignone,1,Ingreso Principal (lado derecho),50933,1628,2025-09-17T18:03:53.572Z
+2025-09-17,12:44:28,Daniela Reyes Tapia,1,Ingreso Principal (lado derecho),50915,1628,2025-09-17T17:44:28.555Z
+2025-09-17,12:37:26,Orlando Ortiz Serrano,1,Ingreso Principal (lado derecho),50912,1628,2025-09-17T17:37:26.222Z
+2025-09-17,12:37:25,Catalina Bohm Andrade,1,Ingreso Principal (lado derecho),50911,1628,2025-09-17T17:37:25.222Z
+2025-09-17,12:36:08,Francisco Javier  Torres Hadathy,1,Ingreso Principal (lado derecho),51243,1628,2025-09-17T17:36:08.555Z
+2025-09-17,12:22:31,Jorge Luis  Perez,1,Ingreso Principal (lado derecho),51111,1628,2025-09-17T17:22:31.889Z
+2025-09-17,12:14:11,David SebastiÃ¡n Reyes Santos,1,Ingreso Principal (lado derecho),50908,1628,2025-09-17T17:14:11.215Z
+2025-09-17,11:38:12,Jorge Luis PeÃ±a ZuÃ±iga,1,Ingreso Principal (lado derecho),50885,1628,2025-09-17T16:38:12.055Z
+2025-09-17,11:24:21,Fernando Xavier Valdivieso Rivadeneira,1,Ingreso Principal (lado derecho),51112,1628,2025-09-17T16:24:21.347Z
+2025-09-17,11:17:05,Jose Ignacio Garces Holguin,1,Ingreso Principal (lado derecho),50863,1628,2025-09-17T16:17:05.414Z
+2025-09-17,11:11:36,Pablo Antonio Lopez Chiriboga,1,Ingreso Principal (lado derecho),50858,1628,2025-09-17T16:11:36.747Z
+2025-09-17,11:02:32,David SebastiÃ¡n Reyes Santos,1,Ingreso Principal (lado derecho),50850,1628,2025-09-17T16:02:32.479Z
+2025-09-17,11:02:31,David SebastiÃ¡n Reyes Santos,1,Ingreso Principal (lado derecho),50851,1628,2025-09-17T16:02:31.423Z
+2025-09-17,10:42:41,Jorge Mario PatiÃ±o GonzÃ¡lez,1,Ingreso Principal (lado derecho),50835,1628,2025-09-17T15:42:41.768Z
+2025-09-17,09:04:50,Esteban Vorbeck,1,Vestidor Caballeros,50796,1176,2025-09-17T14:04:50.367Z
+2025-09-17,08:49:04,Jorge Enrique Cobo,1,Ingreso Principal (lado derecho),50812,1628,2025-09-17T13:49:04.409Z
+2025-09-17,08:46:08,Rolando Eloy Ochoa Rodas,1,Ingreso Principal (lado izquierdo),50815,1175,2025-09-17T13:46:08.614Z
+2025-09-17,08:39:49,Gonzalo Hernan Rueda Diaz,1,Ingreso Principal (lado izquierdo),50820,1175,2025-09-17T13:39:49.748Z
+2025-09-17,08:06:30,Jose Antonio  Jimenez,1,Ingreso Principal (lado derecho),50728,1628,2025-09-17T13:06:30.340Z
+2025-09-17,08:06:30,Jose Antonio  Jimenez,1,Ingreso Principal (lado izquierdo),50727,1175,2025-09-17T13:06:30.311Z
+2025-09-17,07:58:50,Daniel Gonzalez,1,Ingreso Principal (lado derecho),50724,1628,2025-09-17T12:58:50.007Z
+2025-09-17,07:55:06,Nicolas Palacios Cruz,1,Vestidor Caballeros,50722,1176,2025-09-17T12:55:06.349Z
+2025-09-17,07:51:31,Ana Gabriela Bader Cordovez,1,Ingreso Principal (lado derecho),50718,1628,2025-09-17T12:51:31.340Z
+2025-09-17,07:51:31,Ana Gabriela Bader Cordovez,1,Ingreso Principal (lado derecho),50717,1628,2025-09-17T12:51:31.340Z
+2025-09-17,07:45:20,Marcial Del Pozo,1,Ingreso Principal (lado derecho),50783,1628,2025-09-17T12:45:20.674Z
+2025-09-17,07:42:25,Oscar Augusto ProaÃ±o Bustamante,1,Ingreso Principal (lado izquierdo),50710,1175,2025-09-17T12:42:25.975Z
+2025-09-17,07:40:25,Luis Antonio Sevilla Abad ,1,Ingreso Principal (lado izquierdo),50705,1175,2025-09-17T12:40:25.642Z
+2025-09-17,07:18:33,Diego Hernan Leon Guarderas,1,Ingreso Principal (lado derecho),50697,1628,2025-09-17T12:18:33.695Z
+2025-09-17,07:18:33,Diego Hernan Leon Guarderas,1,Ingreso Principal (lado derecho),50696,1628,2025-09-17T12:18:33.029Z
+2025-09-17,07:16:52,William Monroe,1,Ingreso Principal (lado derecho),50695,1628,2025-09-17T12:16:52.362Z
+2025-09-17,07:09:42,Claudia Bello,1,Ingreso Principal (lado derecho),50693,1628,2025-09-17T12:09:42.362Z
+2025-09-17,07:08:16,Edgar Xavier Godoy Jaramillo,1,Ingreso Principal (lado derecho),50692,1628,2025-09-17T12:08:16.362Z
+2025-09-17,07:05:22,Carlos Esteban  Larrea Serrano,1,Ingreso Principal (lado derecho),50689,1628,2025-09-17T12:05:22.695Z
+2025-09-17,07:00:54,Pablo Eduardo Enriquez Bedon,1,Ingreso Principal (lado derecho),50784,1628,2025-09-17T12:00:54.695Z
+2025-09-17,06:58:14,Santiago Guzman,1,Ingreso Principal (lado derecho),50687,1628,2025-09-17T11:58:14.363Z
+2025-09-17,06:58:14,Santiago Guzman,1,Ingreso Principal (lado derecho),50686,1628,2025-09-17T11:58:14.030Z
+2025-09-17,06:55:28,Nombre Desconocido,1,Ingreso Principal (lado derecho),50685,1628,2025-09-17T11:55:28.030Z
+2025-09-17,06:55:27,Nombre Desconocido,1,Ingreso Principal (lado derecho),50684,1628,2025-09-17T11:55:27.697Z
+2025-09-17,06:55:25,Mauricio Letort Mena,1,Ingreso Principal (lado derecho),50782,1628,2025-09-17T11:55:25.697Z
+2025-09-17,06:55:25,Nombre Desconocido,1,Ingreso Principal (lado derecho),50683,1628,2025-09-17T11:55:25.697Z
+2025-09-17,06:52:55,Oswaldo Del Pozo,1,Ingreso Principal (lado derecho),50682,1628,2025-09-17T11:52:55.363Z
+2025-09-17,06:52:53,Oswaldo Del Pozo,1,Ingreso Principal (lado derecho),50681,1628,2025-09-17T11:52:53.931Z
+2025-09-16,20:17:55,Jose Ignacio Moreno Andrade,1,Ingreso Principal (lado derecho),50632,1628,2025-09-17T01:17:55.306Z
+2025-09-16,19:27:34,Johana Jaramillo,1,Ingreso Principal (lado derecho),50609,1628,2025-09-17T00:27:34.690Z
+2025-09-16,19:27:33,Johana Jaramillo,1,Ingreso Principal (lado derecho),50610,1628,2025-09-17T00:27:33.290Z
+2025-09-16,19:27:30,Johana Jaramillo,1,Ingreso Principal (lado derecho),50613,1628,2025-09-17T00:27:30.356Z
+2025-09-16,19:22:23,Daniel Esteban Contag Garcia,1,Ingreso Principal (lado derecho),50605,1628,2025-09-17T00:22:23.261Z
+2025-09-16,18:00:25,Francisco Javier Benitez Sacoto,1,Ingreso Principal (lado derecho),50597,1628,2025-09-16T23:00:25.876Z
+2025-09-16,17:44:45,Jonny Witt,1,Ingreso Tennis,50666,1184,2025-09-16T22:44:45.766Z
+2025-09-16,17:40:06,Juliana Vallejo Saavedra,1,Ingreso Principal (lado izquierdo),50620,1175,2025-09-16T22:40:06.876Z
+2025-09-16,17:32:30,Carlos Roberto Brauer Cornejo,1,Ingreso Principal (lado derecho),50592,1628,2025-09-16T22:32:30.209Z
+2025-09-16,17:02:04,Tomas Ehrenfeld Rosemberg,1,Ingreso Principal (lado derecho),50587,1628,2025-09-16T22:02:04.182Z
+2025-09-16,16:52:48,Ramiro Alfredo Sotomayor Martinez,1,Ingreso Principal (lado izquierdo),50583,1175,2025-09-16T21:52:48.334Z
+2025-09-16,16:52:48,Ramiro Alfredo Sotomayor Martinez,1,Ingreso Principal (lado izquierdo),50579,1175,2025-09-16T21:52:48.334Z
+2025-09-16,16:52:46,Ramiro Alfredo Sotomayor Martinez,1,Ingreso Principal (lado izquierdo),50581,1175,2025-09-16T21:52:46.334Z
+2025-09-16,16:52:45,Javier Alejandro Davila Ruales,1,Ingreso Principal (lado derecho),50580,1628,2025-09-16T21:52:45.518Z
+2025-09-16,16:52:41,Javier Alejandro Davila Ruales,1,Ingreso Principal (lado derecho),50584,1628,2025-09-16T21:52:41.185Z
+2025-09-16,16:52:32,Ramiro Alfredo Sotomayor Martinez,1,Ingreso Principal (lado izquierdo),50585,1175,2025-09-16T21:52:32.667Z
+2025-09-16,15:34:08,Nombre Desconocido,1,Ingreso Principal (lado izquierdo),50534,1175,2025-09-16T20:34:08.506Z
+2025-09-16,15:34:08,OMAR PAUL HERNANDEZ PABON,1,Ingreso Principal (lado izquierdo),50533,1175,2025-09-16T20:34:08.506Z
+2025-09-16,14:05:33,Pablo Miguel Lopez Molina,1,Ingreso Principal (lado izquierdo),50460,1175,2025-09-16T19:05:33.248Z
+2025-09-16,12:20:09,Nombre Desconocido,1,Ingreso Principal (lado derecho),50377,1628,2025-09-16T17:20:09.337Z
+2025-09-16,12:20:07,Nombre Desconocido,1,Ingreso Principal (lado derecho),50379,1628,2025-09-16T17:20:07.670Z
+2025-09-16,12:16:12,Andrea  Russo,1,Ingreso Principal (lado izquierdo),50375,1175,2025-09-16T17:16:12.994Z
+2025-09-16,11:34:12,Victor Alfredo Lobato Cueva,1,Ingreso Principal (lado derecho),50374,1628,2025-09-16T16:34:12.053Z
+2025-09-16,11:34:11,Victor Alfredo Lobato Cueva,1,Ingreso Principal (lado derecho),50373,1628,2025-09-16T16:34:11.387Z
+2025-09-16,11:23:45,Nombre Desconocido,1,Ingreso Principal (lado derecho),50344,1628,2025-09-16T16:23:45.261Z
+2025-09-16,11:23:45,OMAR PAUL HERNANDEZ PABON,1,Ingreso Principal (lado derecho),50343,1628,2025-09-16T16:23:45.261Z
+2025-09-16,10:05:10,Pedro Manuel Cordova Balda,1,Ingreso Principal (lado izquierdo),50419,1175,2025-09-16T15:05:10.979Z
+2025-09-16,10:05:10,Pedro Manuel Cordova Balda,1,Ingreso Principal (lado izquierdo),50383,1175,2025-09-16T15:05:10.979Z
+2025-09-16,10:05:07,Pedro Manuel Cordova Balda,1,Ingreso Principal (lado izquierdo),50418,1175,2025-09-16T15:05:07.215Z
+2025-09-16,10:05:07,Pedro Manuel Cordova Balda,1,Ingreso Principal (lado izquierdo),50382,1175,2025-09-16T15:05:07.215Z
+2025-09-16,10:03:03,Johana Jaramillo,1,Ingreso Principal (lado izquierdo),50612,1175,2025-09-16T15:03:03.981Z
+2025-09-16,09:54:16,Boris Alejandro Aguirre Duran,1,Ingreso Principal (lado derecho),50347,1628,2025-09-16T14:54:16.223Z
+2025-09-16,09:51:29,Claudia Terneus Jacome,1,Ingreso Principal (lado derecho),50348,1628,2025-09-16T14:51:29.555Z
+2025-09-16,09:15:41,Nicolas Andres Flores Proaño,1,Ingreso Principal (lado izquierdo),50469,1175,2025-09-16T14:15:41.722Z
+2025-09-16,08:09:18,Nombre Desconocido,1,Vestidor Caballeros,50675,1176,2025-09-16T13:09:18.525Z
+2025-09-16,07:10:38,Solange Werner,1,Ingreso Principal (lado derecho),50237,1628,2025-09-16T12:10:38.893Z
+2025-09-16,06:50:19,Pablo Esteban Arroyo Leon,1,Ingreso Principal (lado izquierdo),50234,1175,2025-09-16T11:50:19.281Z
+2025-09-16,06:50:18,Pablo Esteban Arroyo Leon,1,Ingreso Principal (lado izquierdo),50233,1175,2025-09-16T11:50:18.214Z
+2025-09-16,06:50:17,Pablo Esteban Arroyo Leon,1,Ingreso Principal (lado derecho),50232,1628,2025-09-16T11:50:17.214Z
+2025-09-16,06:38:44,Nombre Desconocido,1,Ingreso Principal (lado derecho),50230,1628,2025-09-16T11:38:44.548Z
+2025-09-14,18:23:51,Hermann Michael Alarcon Bach,1,Ingreso Principal (lado derecho),49853,1628,2025-09-14T23:23:51.603Z
+2025-09-14,17:51:51,Esteban Vorbeck,1,Ingreso Principal (lado derecho),50164,1628,2025-09-14T22:51:51.909Z
+2025-09-14,17:38:19,Maria Cristina Arteaga Varea,1,Vestidor Damas,49847,1177,2025-09-14T22:38:19.680Z
+2025-09-14,17:38:19,Maria Cristina Arteaga Varea,1,Vestidor Damas,49845,1177,2025-09-14T22:38:19.680Z
+2025-09-14,14:47:21,Nombre Desconocido,1,Ingreso Principal (lado derecho),49836,1628,2025-09-14T19:47:21.888Z
+2025-09-14,12:26:06,Francisco Aguirre Crespo,1,Ingreso Principal (lado derecho),49889,1628,2025-09-14T17:26:06.203Z
+2025-09-14,10:11:06,DAVID ANDREW BALFOUR ARIZAGA,1,Ingreso Principal (lado derecho),49828,1628,2025-09-14T15:11:06.065Z
+2025-09-14,10:11:03,DAVID ANDREW BALFOUR ARIZAGA,1,Ingreso Principal (lado derecho),49829,1628,2025-09-14T15:11:03.665Z
+2025-09-14,08:52:43,Ramiro Alfredo Sotomayor Martinez,1,Ingreso Principal (lado derecho),49814,1628,2025-09-14T13:52:43.378Z
+2025-09-14,07:31:15,Juan Carlos Bernal,1,Ingreso Principal (lado derecho),49830,1628,2025-09-14T12:31:15.045Z
+2025-09-13,18:58:10,DAVID ANDREW BALFOUR ARIZAGA,1,Ingreso Principal (lado derecho),49827,1628,2025-09-13T23:58:10.341Z
+2025-09-13,18:36:20,Nombre Desconocido,1,Ingreso Principal (lado derecho),49759,1628,2025-09-13T23:36:20.874Z
+2025-09-13,18:35:34,Hermann Michael Alarcon Bach,1,Ingreso Principal (lado derecho),49825,1628,2025-09-13T23:35:34.274Z
+2025-09-13,18:18:41,Nombre Desconocido,1,Ingreso Principal (lado izquierdo),49756,1175,2025-09-13T23:18:41.874Z
+2025-09-13,18:03:38,DAVID ANDREW BALFOUR ARIZAGA,1,Ingreso Principal (lado derecho),49826,1628,2025-09-13T23:03:38.541Z
+2025-09-13,17:38:01,Nombre Desconocido,1,Ingreso Principal (lado derecho),49754,1628,2025-09-13T22:38:01.120Z
+2025-09-13,17:30:43,Martin Fernandez Hontou,1,Ingreso Principal (lado derecho),49832,1628,2025-09-13T22:30:43.541Z
+2025-09-13,17:07:36,Martin Fernandez Hontou,1,Ingreso Principal (lado izquierdo),49831,1175,2025-09-13T22:07:36.986Z
+2025-09-13,16:51:54,Nombre Desconocido,1,Ingreso Principal (lado derecho),49745,1628,2025-09-13T21:51:54.585Z
+2025-09-13,15:02:02,Nombre Desconocido,1,Ingreso Principal (lado derecho),49742,1628,2025-09-13T20:02:02.086Z
+2025-09-13,12:41:45,Nombre Desconocido,1,Ingreso Principal (lado derecho),49733,1628,2025-09-13T17:41:45.357Z
+2025-09-13,12:18:29,Nombre Desconocido,1,Ingreso Principal (lado derecho),49732,1628,2025-09-13T17:18:29.357Z
+2025-09-13,07:02:47,Carlos Mauricio Ortiz Negrete,1,Ingreso Principal (lado izquierdo),49697,1175,2025-09-13T12:02:47.244Z
+2025-09-12,18:30:55,Nombre Desconocido,1,Ingreso Principal (lado izquierdo),49757,1175,2025-09-12T23:30:55.047Z
+2025-09-12,18:08:20,Nombre Desconocido,1,Ingreso Principal (lado izquierdo),49731,1175,2025-09-12T23:08:20.647Z
+2025-09-12,18:08:20,Nombre Desconocido,1,Ingreso Principal (lado izquierdo),49724,1175,2025-09-12T23:08:20.647Z
+2025-09-12,16:14:46,Nombre Desconocido,1,Ingreso Principal (lado derecho),49730,1628,2025-09-12T21:14:46.042Z
 2025-09-12,16:14:46,Nombre Desconocido,1,Ingreso Principal (lado derecho),49723,1628,2025-09-12T21:14:46.042Z
-2025-09-12,15:29:38,ANDRES ALEJANDRO ARIAS CARRERA,1,Ingreso Principal (lado derecho),49729,1628,2025-09-12T20:29:38.642Z
+2025-09-12,15:29:38,Nombre Desconocido,1,Ingreso Principal (lado derecho),49729,1628,2025-09-12T20:29:38.642Z
 2025-09-12,15:29:38,Nombre Desconocido,1,Ingreso Principal (lado derecho),49722,1628,2025-09-12T20:29:38.642Z
-2025-09-12,14:33:53,ANDRES ALEJANDRO ARIAS CARRERA,1,Ingreso Principal,49728,1175,2025-09-12T19:33:53.251Z
-2025-09-12,14:33:53,Nombre Desconocido,1,Ingreso Principal,49726,1175,2025-09-12T19:33:53.251Z
-2025-09-12,14:33:53,Nombre Desconocido,1,Ingreso Principal,49721,1175,2025-09-12T19:33:53.251Z
-2025-09-12,14:13:57,ANDRES ALEJANDRO ARIAS CARRERA,1,Ingreso Principal (lado derecho),49727,1628,2025-09-12T19:13:57.825Z
+2025-09-12,14:33:53,Nombre Desconocido,1,Ingreso Principal (lado izquierdo),49728,1175,2025-09-12T19:33:53.251Z
+2025-09-12,14:33:53,Nombre Desconocido,1,Ingreso Principal (lado izquierdo),49726,1175,2025-09-12T19:33:53.251Z
+2025-09-12,14:33:53,Nombre Desconocido,1,Ingreso Principal (lado izquierdo),49721,1175,2025-09-12T19:33:53.251Z
+2025-09-12,14:13:57,Nombre Desconocido,1,Ingreso Principal (lado derecho),49727,1628,2025-09-12T19:13:57.825Z
 2025-09-12,14:13:57,Nombre Desconocido,1,Ingreso Principal (lado derecho),49725,1628,2025-09-12T19:13:57.825Z
 2025-09-12,14:13:57,Nombre Desconocido,1,Ingreso Principal (lado derecho),49720,1628,2025-09-12T19:13:57.825Z
-2025-09-11,15:02:06,OMAR PAUL HERNANDEZ PABON,1,Ingreso Principal,49415,1175,2025-09-11T20:02:06.338Z
-2025-09-11,12:55:46,OMAR PAUL HERNANDEZ PABON,1,Ingreso Principal,49387,1175,2025-09-11T17:55:46.199Z
+2025-09-11,15:02:06,OMAR PAUL HERNANDEZ PABON,1,Ingreso Principal (lado izquierdo),49415,1175,2025-09-11T20:02:06.338Z
+2025-09-11,12:55:46,OMAR PAUL HERNANDEZ PABON,1,Ingreso Principal (lado izquierdo),49387,1175,2025-09-11T17:55:46.199Z
 2025-09-11,12:11:35,Nombre Desconocido,1,Ingreso Principal (lado derecho),49374,1628,2025-09-11T17:11:35.204Z
 2025-09-11,12:11:35,OMAR PAUL HERNANDEZ PABON,1,Ingreso Principal (lado derecho),49373,1628,2025-09-11T17:11:35.204Z
-2025-09-11,07:17:27,Carlos Mauricio Ortiz Negrete,1,Ingreso Principal,49465,1175,2025-09-11T12:17:27.354Z
+2025-09-11,07:17:27,Carlos Mauricio Ortiz Negrete,1,Ingreso Principal (lado izquierdo),49465,1175,2025-09-11T12:17:27.354Z
 2025-09-10,15:28:51,OMAR PAUL HERNANDEZ PABON,1,Ingreso Principal (lado derecho),49145,1628,2025-09-10T20:28:51.769Z
 2025-09-10,13:25:10,OMAR PAUL HERNANDEZ PABON,1,Ingreso Principal (lado derecho),49082,1628,2025-09-10T18:25:10.234Z
 2025-09-10,13:25:08,OMAR PAUL HERNANDEZ PABON,1,Ingreso Principal (lado derecho),49080,1628,2025-09-10T18:25:08.034Z
 2025-09-09,08:58:55,Nombre Desconocido,1,Ingreso Principal (lado derecho),48347,1628,2025-09-09T13:58:55.447Z
 2025-09-09,08:58:53,Nombre Desconocido,1,Ingreso Principal (lado derecho),48346,1628,2025-09-09T13:58:53.447Z
-2025-09-06,15:55:48,Nombre Desconocido,1,Ingreso Principal,47782,1175,2025-09-06T20:55:48.196Z
-2025-09-06,13:37:20,Nombre Desconocido,1,Ingreso Principal,47771,1175,2025-09-06T18:37:20.911Z
+2025-09-06,15:55:48,Nombre Desconocido,1,Ingreso Principal (lado izquierdo),47782,1175,2025-09-06T20:55:48.196Z
+2025-09-06,13:37:20,Nombre Desconocido,1,Ingreso Principal (lado izquierdo),47771,1175,2025-09-06T18:37:20.911Z
 2025-09-05,10:58:02,Nombre Desconocido,1,Ingreso Principal (lado derecho),47421,1628,2025-09-05T15:58:02.905Z
 2025-09-05,10:23:19,Nombre Desconocido,1,Puente,47407,1186,2025-09-05T15:23:19.995Z
 2025-09-05,08:55:43,Nombre Desconocido,1,Ingreso Principal (lado derecho),47380,1628,2025-09-05T13:55:43.029Z

@@ -1,8 +1,8 @@
 fecha,hora,nombre_persona,conteo,camara,search_id,camera_id,ts_utc
 2025-09-06,09:36:04,Nombre Desconocido,1,Ingreso Principal (lado derecho),47756,1628,2025-09-06T14:36:04.616Z
-2025-09-06,09:27:46,Nombre Desconocido,1,Ingreso Principal,47754,1175,2025-09-06T14:27:46.354Z
+2025-09-06,09:27:46,Nombre Desconocido,1,Ingreso Principal (lado izquierdo),47754,1175,2025-09-06T14:27:46.354Z
 2025-09-06,07:26:52,Nombre Desconocido,1,Ingreso Principal (lado derecho),47722,1628,2025-09-06T12:26:52.819Z
-2025-09-06,07:26:52,Nombre Desconocido,1,Ingreso Principal,47726,1175,2025-09-06T12:26:52.676Z
-2025-09-06,07:26:52,Nombre Desconocido,1,Ingreso Principal,47725,1175,2025-09-06T12:26:52.342Z
+2025-09-06,07:26:52,Nombre Desconocido,1,Ingreso Principal (lado izquierdo),47726,1175,2025-09-06T12:26:52.676Z
+2025-09-06,07:26:52,Nombre Desconocido,1,Ingreso Principal (lado izquierdo),47725,1175,2025-09-06T12:26:52.342Z
 2025-09-06,07:26:50,Nombre Desconocido,1,Ingreso Principal (lado derecho),47728,1628,2025-09-06T12:26:50.886Z
 2025-09-05,10:23:19,Nombre Desconocido,1,Puente,47603,1186,2025-09-05T15:23:19.995Z

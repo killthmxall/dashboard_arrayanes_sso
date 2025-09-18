@@ -672,6 +672,29 @@ def construir_html_dashboard_bootstrap(estado: dict, gallery_id: int, titulo: st
   .name-cell {{ display:flex; align-items:center; gap:10px; }}
   .avatar {{ width: 28px; height: 28px; border-radius: 50%; background: #0b1226; border: 1px solid var(--border); display:flex; align-items:center; justify-content:center; font-size: 12px; color: #9fb4da; font-weight:700; overflow:hidden; }}
   .avatar img {{ width:100%; height:100%; object-fit:cover; display:block; }}
+  
+  /*Botones adicionales*/
+  .vendor-links {{
+    display:flex; flex-wrap:wrap; gap:10px; align-items:center;
+    margin: 6px 0 18px;
+  }}
+  .vendor-btn {{
+    display:inline-flex; align-items:center; gap:10px;
+    background:#0b1226; color:var(--text);
+    border:1px solid var(--border); border-radius: 999px;
+    padding: 8px 12px; text-decoration:none; font-weight:700;
+    transition: transform .06s ease, background .2s ease, border-color .2s ease;
+  }}
+  .vendor-btn:hover {{ background:#10183a; border-color:#2a3a64; transform: translateY(-1px); }}
+  .vendor-btn img {{
+    width: 20px; height: 20px; display:block; border-radius: 4px;
+    background: #fff;
+  }}
+  .vendor-badge {{
+    font-size: 12px; color: var(--muted); font-weight: 600; letter-spacing:.2px;
+  }}
+
+  
 </style>
 </head>
 <body>
@@ -699,6 +722,30 @@ def construir_html_dashboard_bootstrap(estado: dict, gallery_id: int, titulo: st
           <a href="{ruta_proveedores}" class="item {activo_proveedores}" role="menuitem">Proveedores</a>
         </div>
       </div>
+    </div>
+    
+        <!-- Atajos a plataformas -->
+    <div class="vendor-links" role="group" aria-label="Atajos a plataformas">
+      <a class="vendor-btn" href="https://blocksecurity.eagleeyenetworks.com/login.html" target="_blank" rel="noopener noreferrer" title="Eagle Eye Networks">
+        <img src="https://blocksecurity.eagleeyenetworks.com/favicon.ico"
+            alt="Eagle Eye" 
+            onerror="this.replaceWith(Object.assign(document.createElement('span'),{{className:'vendor-badge',innerText:'Eagle Eye'}}));">
+        Eagle Eye
+      </a>
+
+      <a class="vendor-btn" href="https://www.brivo.com/login/" target="_blank" rel="noopener noreferrer" title="Brivo">
+        <img src="https://www.brivo.com/favicon.ico"
+            alt="Brivo"
+            onerror="this.replaceWith(Object.assign(document.createElement('span'),{{className:'vendor-badge',innerText:'Brivo'}}));">
+        Brivo
+      </a>
+
+      <a class="vendor-btn" href="https://dashboard.verifyfaces.com/auth/sign-in?_gl=1*1kx5vdz*_ga*OTc2MDk1NjU3LjE3NTgyMDk5MTI.*_ga_4GBK09CZNS*czE3NTgyMDk5MTIkbzEkZzAkdDE3NTgyMDk5MTIkajYwJGwwJGgw" target="_blank" rel="noopener noreferrer" title="VerifyFaces">
+        <img src="https://dashboard.verifyfaces.com/favicon.ico"
+            alt="VerifyFaces"
+            onerror="this.replaceWith(Object.assign(document.createElement('span'),{{className:'vendor-badge',innerText:'VerifyFaces'}}));">
+        VerifyFaces
+      </a>
     </div>
     
     <div class="grid cards">
