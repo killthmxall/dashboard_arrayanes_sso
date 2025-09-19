@@ -733,7 +733,7 @@ def construir_html_dashboard_bootstrap(estado: dict, gallery_id: int, titulo: st
         Eagle Eye
       </a>
 
-      <a class="vendor-btn" href="https://www.brivo.com/login/" target="_blank" rel="noopener noreferrer" title="Brivo">
+      <a class="vendor-btn" href="https://account.brivo.com/global/index.html?useGlobalLogin=true" target="_blank" rel="noopener noreferrer" title="Brivo">
         <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABwAAAAcCAMAAABF0y+mAAAAJ1BMVEVHcExzndJzndJzndJzndJzndJzndJzndJzndJzndJzndJzndJzndKmBMcxAAAADHRSTlMAldt6EsND7itVaK1Q6TDnAAAA5ElEQVQokXVSWwLDIAgT8K33P+9ELGC38dMKJCRoCBa19d5q+BE5zRMpv0oVpwu84LRzZQCMsn/JasBniHKIcvI4jNYb0bCVRdwSWJzMXVPwrX1hC3/b6jLOBmNQDXElm1DodFAvJKMMGItZ5ba1GZvItQKdnl3l0JV1qIEo++psktRRD45k5bUI3m2VotKiiDeji0cFXXa3gLyTf4pCQIfI3TIKYTvQS9CzPpadjsDsgHvxLGkLTlP1JmuEqVueSLndT2GIZb/4YdrkqhJoDYKL7EBLy/vldn252MN3xEYAlN2aPkeLDmFIVjsXAAAAAElFTkSuQmCC"
             alt="Brivo"
             onerror="this.replaceWith(Object.assign(document.createElement('span'),{{className:'vendor-badge',innerText:'Brivo'}}));">
