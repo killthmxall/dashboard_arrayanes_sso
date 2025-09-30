@@ -967,6 +967,7 @@ def construir_html_dashboard_bootstrap(estado: dict, gallery_id: int, titulo: st
 
         const nameOk = !nameQ || cellNameStr.toLowerCase().includes(nameQ);
 
+        // 🔧 cámara: revisa en TIMES_BY por clave (fecha||persona)
         const key = tr.getAttribute('data-key') || '';
         const arr = TIMES_BY[key] || [];
         const cameraOk = !cameraSel || arr.some(o => (o.c || '').toLowerCase() === cameraSel);
@@ -1039,7 +1040,7 @@ def construir_html_dashboard_bootstrap(estado: dict, gallery_id: int, titulo: st
             const ts  = o.ts  || '';
 
             const url = (sid && cid && ts)
-              ? `https://dashboard.verifyfaces.com/company/${{encodeURIComponent("{COMPANY_ID}")}}/stream/${{sid}}/camera/${{cid}}?timestamp=${{encodeURIComponent(ts)}}&search=real-time`
+              ? `https://dashboard.verifyfaces.com/company/54/stream/${{sid}}/camera/${{cid}}?timestamp=${{encodeURIComponent(ts)}}&search=real-time`
               : '';
 
             const horaChip = url
@@ -1500,7 +1501,7 @@ def obtener_imagenes_galeria(gallery_id: int = EMP_GALLERY_ID):
         if not obtener_nuevo_token():
             print("Error: No se pudo obtener un token de autenticación.")
             return
-    gallery_url = f"https://dashboard-api.verifyfaces.com/companies/{COMPANY_ID}/galleries/{gallery_id}"
+    gallery_url = f"https://dashboard-api.verifyfaces.com/companies/54/galleries/{gallery_id}"
     headers = {"Authorization": f"Bearer {TOKEN}"}
     params = {"perPage": 50, "page": 1}
     try:
