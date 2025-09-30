@@ -585,8 +585,8 @@ def construir_html_dashboard_bootstrap(estado: dict, gallery_id: int, titulo: st
 <meta charset="utf-8">
 <title>{html_escape(titulo)}</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="icon" type="image/png" href="https://res.cloudinary.com/df5olfhrq/image/upload/v1756228647/logo_tpskcd.png">
-<link rel="apple-touch-icon" href="https://res.cloudinary.com/df5olfhrq/image/upload/v1756228647/logo_tpskcd.png">
+<link rel="icon" type="image/png" href="https://res.cloudinary.com/df5olfhrq/image/upload/v1736526975/obnza6ahljocrljr2tdk.png">
+<link rel="apple-touch-icon" href="https://res.cloudinary.com/df5olfhrq/image/upload/v1736526975/obnza6ahljocrljr2tdk.png">
 <meta name="theme-color" content="#0b1020">
 <style>
   :root {{
