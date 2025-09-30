@@ -496,7 +496,6 @@ def construir_estado_dashboard(registros, agg, agg_hora_latest, fechas, personas
                 pass
     last_ts_iso = last_ts.isoformat() if last_ts else ""
 
-    # 🔧 filtro cámaras: lista de cámaras presentes en los registros
     cameras_set = { (r.get("camara") or "").strip() for r in registros if r.get("camara") }
     cameras_sorted = sorted(c for c in cameras_set if c)
 
@@ -527,7 +526,7 @@ def construir_estado_dashboard(registros, agg, agg_hora_latest, fechas, personas
         "tbody_html": construir_filas_html(agg, agg_hora_latest, fechas, personas_total, person_img_map),
         "times_by": construir_times_by(registros),
         "last_ts_iso": last_ts_iso,
-        "cameras": cameras_sorted,  # 🔧 filtro cámaras
+        "cameras": cameras_sorted,
     }
     return estado
 
@@ -557,7 +556,6 @@ def construir_html_dashboard_bootstrap(estado: dict, gallery_id: int, titulo: st
     times_by_json = json.dumps(estado.get("times_by", {}))
     js_last_ts = json.dumps(estado.get("last_ts_iso", ""))
 
-    # 🔧 filtro cámaras: opciones del select
     cameras = estado.get("cameras", []) or []
     camera_options_html = "<option value=''>Todas</option>" + "".join(
         f"<option value='{html_escape(c)}'>{html_escape(c)}</option>" for c in cameras
@@ -587,6 +585,9 @@ def construir_html_dashboard_bootstrap(estado: dict, gallery_id: int, titulo: st
 <meta charset="utf-8">
 <title>{html_escape(titulo)}</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" type="image/png" href="https://res.cloudinary.com/df5olfhrq/image/upload/v1756228647/logo_tpskcd.png">
+<link rel="apple-touch-icon" href="https://res.cloudinary.com/df5olfhrq/image/upload/v1756228647/logo_tpskcd.png">
+<meta name="theme-color" content="#0b1020">
 <style>
   :root {{
     --bg: #0b1020;
@@ -847,7 +848,6 @@ def construir_html_dashboard_bootstrap(estado: dict, gallery_id: int, titulo: st
           <input type="text" id="nameFilter" class="input w100" placeholder="Ej.: Juan Pérez">
         </div>
 
-        <!-- 🔧 filtro cámaras -->
         <div class="group">
           <label for="cameraFilter">Cámara</label>
           <select id="cameraFilter" class="input">
@@ -931,7 +931,7 @@ def construir_html_dashboard_bootstrap(estado: dict, gallery_id: int, titulo: st
     const dateStart = document.getElementById('dateStart');
     const dateEnd = document.getElementById('dateEnd');
     const nameFilter = document.getElementById('nameFilter');
-    const cameraFilter = document.getElementById('cameraFilter'); // 🔧 filtro cámaras
+    const cameraFilter = document.getElementById('cameraFilter');
     const clearBtn = document.getElementById('clearFilters');
 
     function normalizeDateStr(d) {{
@@ -951,7 +951,7 @@ def construir_html_dashboard_bootstrap(estado: dict, gallery_id: int, titulo: st
       const start = normalizeDateStr(dateStart.value);
       const end = normalizeDateStr(dateEnd.value);
       const nameQ = (nameFilter.value || '').toLowerCase();
-      const cameraSel = (cameraFilter?.value || '').toLowerCase(); // 🔧
+      const cameraSel = (cameraFilter?.value || '').toLowerCase();
 
       for (const tr of tbody.rows) {{
         if (tr.classList.contains('detail-row')) {{
@@ -967,7 +967,6 @@ def construir_html_dashboard_bootstrap(estado: dict, gallery_id: int, titulo: st
 
         const nameOk = !nameQ || cellNameStr.toLowerCase().includes(nameQ);
 
-        // 🔧 cámara: revisa en TIMES_BY por clave (fecha||persona)
         const key = tr.getAttribute('data-key') || '';
         const arr = TIMES_BY[key] || [];
         const cameraOk = !cameraSel || arr.some(o => (o.c || '').toLowerCase() === cameraSel);
@@ -991,12 +990,12 @@ def construir_html_dashboard_bootstrap(estado: dict, gallery_id: int, titulo: st
     dateStart && dateStart.addEventListener('change', applySpecificFilters);
     dateEnd && dateEnd.addEventListener('change', applySpecificFilters);
     nameFilter && nameFilter.addEventListener('input', applySpecificFilters);
-    cameraFilter && cameraFilter.addEventListener('change', applySpecificFilters); // 🔧
+    cameraFilter && cameraFilter.addEventListener('change', applySpecificFilters);
     clearBtn && clearBtn.addEventListener('click', function(){{
       dateStart.value = '';
       dateEnd.value = '';
       nameFilter.value = '';
-      if (cameraFilter) cameraFilter.value = ''; // 🔧
+      if (cameraFilter) cameraFilter.value = '';
       const fa = document.getElementById('filterAgg');
       if (fa) fa.value = '';
       applySpecificFilters();
