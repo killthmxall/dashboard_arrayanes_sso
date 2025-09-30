@@ -1,60 +1,79 @@
-from flask import Flask, Response, render_template_string, request, jsonify
 import requests
-from collections import defaultdict, Counter
-from datetime import datetime, timedelta, timezone
-from dateutil import parser
 import csv
-from pathlib import Path
 import math
 import json
 import random
 import threading
 import time
 import os
+import requests
+import json
+from flask import Flask, Response, render_template_string, request, jsonify
+from collections import defaultdict, Counter
+from datetime import datetime, timedelta, timezone
+from dateutil import parser
+from pathlib import Path
 from typing import Optional, Any, Dict
 from flask import session, redirect, url_for, g
 from functools import wraps
-import requests
 from oauthlib.oauth2 import WebApplicationClient
-import json
+from ast import literal_eval
+
 
 app = Flask(__name__)
 
-# Credenciales y endpoints VerifyFaces
-API_URL = "https://dashboard-api.verifyfaces.com/companies/54/search/realtime"
-AUTH_URL = "https://dashboard-api.verifyfaces.com/auth/login"
-AUTH_EMAIL = "eangulo@blocksecurity.com.ec"
-AUTH_PASSWORD = "Scarling//07052022.?"
-TOKEN = None
+# =========================
+# VerifyFaces
+# =========================
+VERIFYFACES_API_URL   = os.environ.get("VERIFYFACES_API_URL", "https://dashboard-api.verifyfaces.com/companies/54/search/realtime")
+VERIFYFACES_AUTH_URL  = os.environ.get("VERIFYFACES_AUTH_URL", "https://dashboard-api.verifyfaces.com/auth/login")
+VERIFYFACES_EMAIL     = os.environ.get("VERIFYFACES_EMAIL")
+VERIFYFACES_PASSWORD  = os.environ.get("VERIFYFACES_PASSWORD")
+VERIFYFACES_TOKEN     = os.environ.get("VERIFYFACES_TOKEN")
+COMPANY_ID            = os.environ.get("VERIFYFACES_COMPANY_ID", "54")
 
-# Configuración de Autenticación
+# =========================
+# OAuth Google desde ENV
+# =========================
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
 
 if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
     raise ValueError("Las variables de entorno GOOGLE_CLIENT_ID y GOOGLE_CLIENT_SECRET deben estar configuradas.")
 
-
 GOOGLE_DISCOVERY_URL = "https://accounts.google.com/.well-known/openid-configuration"
-app.secret_key = os.environ.get("SECRET_KEY") or "your-super-secret-key-123"
+app.secret_key = os.environ.get("SECRET_KEY") or "super-secret-key-123"
 
 # Lista de usuarios autorizados
-AUTHORIZED_USERS = [
-    "killthmxall@gmail.com",
-    "jronquillolugo@gmail.com",
-    "paul.hernandez@arrayanes.com",
-    "coord.seguridad@arrayanes.com",
-    "johana.jaramillo@arrayanes.com",
-    "atencionalsocio@arrayanes.com"
-]
+def _load_authorized_users():
+    raw = os.environ.get("AUTHORIZED_USERS", "")
+    if not raw:
+        return []
+    raw = raw.strip()
+    if raw.startswith("["):
+        try:
+            lst = literal_eval(raw)
+            return [s.strip() for s in lst if isinstance(s, str)]
+        except Exception:
+            pass
+    return [s.strip() for s in raw.split(",") if s.strip()]
+
+AUTHORIZED_USERS = _load_authorized_users()
 
 # Configuración del cliente OAuth 2
 client = WebApplicationClient(GOOGLE_CLIENT_ID)
 
+
+API_URL  = VERIFYFACES_API_URL
+AUTH_URL = VERIFYFACES_AUTH_URL
+AUTH_EMAIL = VERIFYFACES_EMAIL
+AUTH_PASSWORD = VERIFYFACES_PASSWORD
+TOKEN = None
+
 # IDs de galería
-EMP_GALLERY_ID = 531
-SOC_GALLERY_ID = 546
-PROV_GALLERY_ID = 548
+EMP_GALLERY_ID = int(os.environ.get("EMP_GALLERY_ID", 531))
+SOC_GALLERY_ID = int(os.environ.get("SOC_GALLERY_ID", 546))
+PROV_GALLERY_ID = int(os.environ.get("PROV_GALLERY_ID", 548))
 GALLERY_IDS = [EMP_GALLERY_ID, SOC_GALLERY_ID, PROV_GALLERY_ID]
 
 # CSVs por galería
@@ -156,7 +175,7 @@ def cargar_cache_galeria(gallery_id: int) -> bool:
     """
     global TOKEN, GALLERY_CACHE, PERSON_IMG_MAP_BY
 
-    BASE_URL = f"https://dashboard-api.verifyfaces.com/companies/54/galleries/{gallery_id}"
+    BASE_URL = f"https://dashboard-api.verifyfaces.com/companies/{COMPANY_ID}/galleries/{gallery_id}"
     PER_PAGE_LOCAL = 100
 
     MAX_PAGE_RETRIES = 3
@@ -445,7 +464,7 @@ def construir_estado_dashboard(registros, agg, agg_hora_latest, fechas, personas
             'stack': 'Stack 1'
         })
 
-    # Esta semana (12 días atrás a hoy, filtrando existentes)
+    # Esta semana (8 días hacia atrás, filtrando existentes)
     hoy = datetime.now().date()
     ultimos = [(hoy - timedelta(days=i)).strftime("%Y-%m-%d") for i in range(7, -1, -1)]
     fechas_semana = [f for f in ultimos if f in fechas]
@@ -477,6 +496,10 @@ def construir_estado_dashboard(registros, agg, agg_hora_latest, fechas, personas
                 pass
     last_ts_iso = last_ts.isoformat() if last_ts else ""
 
+    # 🔧 filtro cámaras: lista de cámaras presentes en los registros
+    cameras_set = { (r.get("camara") or "").strip() for r in registros if r.get("camara") }
+    cameras_sorted = sorted(c for c in cameras_set if c)
+
     estado = {
         "kpis": {
             "percent_gallery": round(percent_gallery, 1),
@@ -503,7 +526,8 @@ def construir_estado_dashboard(registros, agg, agg_hora_latest, fechas, personas
         },
         "tbody_html": construir_filas_html(agg, agg_hora_latest, fechas, personas_total, person_img_map),
         "times_by": construir_times_by(registros),
-        "last_ts_iso": last_ts_iso
+        "last_ts_iso": last_ts_iso,
+        "cameras": cameras_sorted,  # 🔧 filtro cámaras
     }
     return estado
 
@@ -532,6 +556,12 @@ def construir_html_dashboard_bootstrap(estado: dict, gallery_id: int, titulo: st
     tbody_html = estado.get("tbody_html", "")
     times_by_json = json.dumps(estado.get("times_by", {}))
     js_last_ts = json.dumps(estado.get("last_ts_iso", ""))
+
+    # 🔧 filtro cámaras: opciones del select
+    cameras = estado.get("cameras", []) or []
+    camera_options_html = "<option value=''>Todas</option>" + "".join(
+        f"<option value='{html_escape(c)}'>{html_escape(c)}</option>" for c in cameras
+    )
 
     # rutas y estado activo
     ruta_empleados = "/"
@@ -817,6 +847,14 @@ def construir_html_dashboard_bootstrap(estado: dict, gallery_id: int, titulo: st
           <input type="text" id="nameFilter" class="input w100" placeholder="Ej.: Juan Pérez">
         </div>
 
+        <!-- 🔧 filtro cámaras -->
+        <div class="group">
+          <label for="cameraFilter">Cámara</label>
+          <select id="cameraFilter" class="input">
+            {camera_options_html}
+          </select>
+        </div>
+
         <div class="group">
           <button id="clearFilters" class="input" style="cursor:pointer;">Limpiar</button>
         </div>
@@ -830,7 +868,7 @@ def construir_html_dashboard_bootstrap(estado: dict, gallery_id: int, titulo: st
           <tbody id="tbodyAgg">{tbody_html}</tbody>
         </table>
       </div>
-      <div class="hint">Se agrupan múltiples filas del CSV sumando su columna <code>conteo</code>. Los filtros de fecha y persona se aplican a las filas visibles.</div>
+      <div class="hint">Se agrupan múltiples filas del CSV sumando su columna <code>conteo</code>. Los filtros de fecha, persona y cámara se aplican a las filas visibles.</div>
     </div>
 
     <div class="footer">Generado {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}</div>
@@ -887,12 +925,13 @@ def construir_html_dashboard_bootstrap(estado: dict, gallery_id: int, titulo: st
     }});
   }})();
 
-  // Filtros avanzados
+  // Filtros avanzados (incluye cámara)
   (function(){{
     const tbody = document.getElementById('tbodyAgg');
     const dateStart = document.getElementById('dateStart');
     const dateEnd = document.getElementById('dateEnd');
     const nameFilter = document.getElementById('nameFilter');
+    const cameraFilter = document.getElementById('cameraFilter'); // 🔧 filtro cámaras
     const clearBtn = document.getElementById('clearFilters');
 
     function normalizeDateStr(d) {{
@@ -912,6 +951,7 @@ def construir_html_dashboard_bootstrap(estado: dict, gallery_id: int, titulo: st
       const start = normalizeDateStr(dateStart.value);
       const end = normalizeDateStr(dateEnd.value);
       const nameQ = (nameFilter.value || '').toLowerCase();
+      const cameraSel = (cameraFilter?.value || '').toLowerCase(); // 🔧
 
       for (const tr of tbody.rows) {{
         if (tr.classList.contains('detail-row')) {{
@@ -924,7 +964,13 @@ def construir_html_dashboard_bootstrap(estado: dict, gallery_id: int, titulo: st
         const cellDateStr = tr.cells[0].innerText || '';
         const cellNameStr = tr.cells[2].innerText || '';
         const rowDate = parseCellDateStr(cellDateStr);
+
         const nameOk = !nameQ || cellNameStr.toLowerCase().includes(nameQ);
+
+        // 🔧 cámara: revisa en TIMES_BY por clave (fecha||persona)
+        const key = tr.getAttribute('data-key') || '';
+        const arr = TIMES_BY[key] || [];
+        const cameraOk = !cameraSel || arr.some(o => (o.c || '').toLowerCase() === cameraSel);
 
         let dateOk = true;
         if (start && (!rowDate || rowDate < start)) dateOk = false;
@@ -936,7 +982,7 @@ def construir_html_dashboard_bootstrap(estado: dict, gallery_id: int, titulo: st
         const freeQ = (document.getElementById('filterAgg')?.value || '').toLowerCase();
         const freeOk = !freeQ || tr.innerText.toLowerCase().includes(freeQ);
 
-        tr.style.display = (nameOk && dateOk && freeOk) ? '' : 'none';
+        tr.style.display = (nameOk && dateOk && freeOk && cameraOk) ? '' : 'none';
       }}
 
       collapseHiddenDetails();
@@ -945,10 +991,12 @@ def construir_html_dashboard_bootstrap(estado: dict, gallery_id: int, titulo: st
     dateStart && dateStart.addEventListener('change', applySpecificFilters);
     dateEnd && dateEnd.addEventListener('change', applySpecificFilters);
     nameFilter && nameFilter.addEventListener('input', applySpecificFilters);
+    cameraFilter && cameraFilter.addEventListener('change', applySpecificFilters); // 🔧
     clearBtn && clearBtn.addEventListener('click', function(){{
       dateStart.value = '';
       dateEnd.value = '';
       nameFilter.value = '';
+      if (cameraFilter) cameraFilter.value = ''; // 🔧
       const fa = document.getElementById('filterAgg');
       if (fa) fa.value = '';
       applySpecificFilters();
@@ -992,7 +1040,7 @@ def construir_html_dashboard_bootstrap(estado: dict, gallery_id: int, titulo: st
             const ts  = o.ts  || '';
 
             const url = (sid && cid && ts)
-              ? `https://dashboard.verifyfaces.com/company/54/stream/${{sid}}/camera/${{cid}}?timestamp=${{encodeURIComponent(ts)}}&search=real-time`
+              ? `https://dashboard.verifyfaces.com/company/${{encodeURIComponent("{{COMPANY_ID}}")}}/stream/${{sid}}/camera/${{cid}}?timestamp=${{encodeURIComponent(ts)}}&search=real-time`
               : '';
 
             const horaChip = url
@@ -1111,7 +1159,7 @@ def construir_html_dashboard_bootstrap(estado: dict, gallery_id: int, titulo: st
 
 def _fetch_and_write_csv_for_gallery(gallery_id: int, total_records_needed: int = TOTAL_RECORDS_NEEDED) -> bool:
     """
-    Descarga eventos realtime (últimas 24h), filtra por gallery_id, y escribe el CSV de esa galería.
+    Descarga eventos realtime (mes en curso), filtra por gallery_id, y escribe el CSV de esa galería.
     Devuelve True si hubo cambios escritos.
     """
     global TOKEN, _last_fetch_hash_by
@@ -1129,11 +1177,11 @@ def _fetch_and_write_csv_for_gallery(gallery_id: int, total_records_needed: int 
 
         headers = {"Authorization": f"Bearer {TOKEN}"}
         try:
-            from_dt_utc = datetime.now(timezone.utc) - timedelta(days=1)
+            # Rango: todo el mes en curso
+            from_dt_utc = datetime.now(timezone.utc).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
             to_dt_utc   = datetime.now(timezone.utc)
 
-            # Nota: se conserva el formato original del código
-            from_str = from_dt_utc.strftime("%Y-08-%dT%H:%M:%S.000Z")
+            from_str = from_dt_utc.strftime("%Y-%m-%dT%H:%M:%S.000Z")
             to_str   = to_dt_utc.strftime("%Y-%m-%dT%H:%M:%S.000Z")
 
             all_searches = []
@@ -1453,7 +1501,7 @@ def obtener_imagenes_galeria(gallery_id: int = EMP_GALLERY_ID):
         if not obtener_nuevo_token():
             print("Error: No se pudo obtener un token de autenticación.")
             return
-    gallery_url = f"https://dashboard-api.verifyfaces.com/companies/54/galleries/{gallery_id}"
+    gallery_url = f"https://dashboard-api.verifyfaces.com/companies/{COMPANY_ID}/galleries/{gallery_id}"
     headers = {"Authorization": f"Bearer {TOKEN}"}
     params = {"perPage": 50, "page": 1}
     try:
